@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MessageCircle, ThumbsUp, Share, User, MessageSquare, Copy } from 'lucide-react';
@@ -11,6 +11,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  TooltipProvider,
 } from "@/components/ui/tooltip";
 
 interface Comment {
@@ -49,6 +50,7 @@ const DiscussionCard: React.FC<DiscussionCardProps> = ({
 }) => {
   const { toast } = useToast();
   const [shareOptionsVisible, setShareOptionsVisible] = useState(false);
+  const shareMenuRef = useRef<HTMLDivElement>(null);
   
   // Create shareable URL for this discussion
   const shareableUrl = generateShareableUrl(discussion.id);
@@ -62,6 +64,7 @@ const DiscussionCard: React.FC<DiscussionCardProps> = ({
         title: "Link copied!",
         description: "Discussion link copied to your clipboard",
       });
+      setShareOptionsVisible(false);
     } catch (error) {
       console.error('Error copying to clipboard:', error);
       toast({
@@ -78,108 +81,126 @@ const DiscussionCard: React.FC<DiscussionCardProps> = ({
       `Persona Parent Community: ${discussion.title}`,
       shareableUrl
     );
+    setShareOptionsVisible(false);
   };
 
   const toggleShareOptions = () => {
     setShareOptionsVisible(!shareOptionsVisible);
   };
+  
+  // Close share menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (shareMenuRef.current && !shareMenuRef.current.contains(event.target as Node)) {
+        setShareOptionsVisible(false);
+      }
+    };
+
+    if (shareOptionsVisible) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [shareOptionsVisible]);
 
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow">
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-xl text-persona-blue hover:text-persona-blue/80 cursor-pointer">
-              {discussion.title}
-            </CardTitle>
-            <div className="flex items-center mt-2 text-sm text-gray-500">
-              <div className="flex items-center">
-                <User className="h-4 w-4 mr-1" />
-                <span>{discussion.author}</span>
+    <TooltipProvider>
+      <Card className="overflow-hidden hover:shadow-md transition-shadow">
+        <CardHeader>
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle className="text-xl text-persona-blue hover:text-persona-blue/80 cursor-pointer">
+                {discussion.title}
+              </CardTitle>
+              <div className="flex items-center mt-2 text-sm text-gray-500">
+                <div className="flex items-center">
+                  <User className="h-4 w-4 mr-1" />
+                  <span>{discussion.author}</span>
+                </div>
+                <span className="mx-2">•</span>
+                <span>{discussion.date}</span>
               </div>
-              <span className="mx-2">•</span>
-              <span>{discussion.date}</span>
             </div>
           </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <p className="text-gray-700">{discussion.content}</p>
-        <div className="flex flex-wrap gap-2 mt-4">
-          {discussion.tags.map((tag, index) => (
-            <Badge key={index} variant="outline" className="bg-persona-soft-gray text-gray-700">
-              {tag}
-            </Badge>
-          ))}
-        </div>
-      </CardContent>
-      <CardFooter className="border-t pt-4 flex flex-col">
-        <div className="w-full flex justify-between">
-          <div className="flex gap-6">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="flex items-center gap-1 text-gray-600"
-                  onClick={() => onToggleComments(discussion.id)}
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  <span>{discussion.comments.length}</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {isCommentsExpanded ? 'Hide comments' : 'Show comments'}
-              </TooltipContent>
-            </Tooltip>
-            
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className={`flex items-center gap-1 ${discussion.liked ? 'text-persona-blue' : 'text-gray-600'}`}
-                  onClick={() => onLike(discussion.id)}
-                >
-                  <ThumbsUp className={`h-4 w-4 ${discussion.liked ? 'fill-persona-blue' : ''}`} />
-                  <span>{discussion.likes}</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {discussion.liked ? 'Unlike' : 'Like this discussion'}
-              </TooltipContent>
-            </Tooltip>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-700">{discussion.content}</p>
+          <div className="flex flex-wrap gap-2 mt-4">
+            {discussion.tags.map((tag, index) => (
+              <Badge key={index} variant="outline" className="bg-persona-soft-gray text-gray-700">
+                {tag}
+              </Badge>
+            ))}
           </div>
-          
-          <div className="relative">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant={shareOptionsVisible ? "secondary" : "ghost"}
-                  size="sm" 
-                  className="flex items-center gap-1 text-gray-600"
-                  onClick={toggleShareOptions}
-                >
-                  <Share className="h-4 w-4" />
-                  <span>Share</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                Share this discussion
-              </TooltipContent>
-            </Tooltip>
+        </CardContent>
+        <CardFooter className="border-t pt-4 flex flex-col">
+          <div className="w-full flex justify-between">
+            <div className="flex gap-6">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="flex items-center gap-1 text-gray-600"
+                    onClick={() => onToggleComments(discussion.id)}
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    <span>{discussion.comments.length}</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {isCommentsExpanded ? 'Hide comments' : 'Show comments'}
+                </TooltipContent>
+              </Tooltip>
+              
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className={`flex items-center gap-1 ${discussion.liked ? 'text-persona-blue' : 'text-gray-600'}`}
+                    onClick={() => onLike(discussion.id)}
+                  >
+                    <ThumbsUp className={`h-4 w-4 ${discussion.liked ? 'fill-persona-blue' : ''}`} />
+                    <span>{discussion.likes}</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {discussion.liked ? 'Unlike' : 'Like this discussion'}
+                </TooltipContent>
+              </Tooltip>
+            </div>
             
-            {/* Share options positioned absolutely to the right */}
-            {shareOptionsVisible && (
-              <div className="absolute right-0 top-full mt-2 bg-white shadow-md rounded-md border p-4 z-10 w-64">
-                <p className="text-sm font-medium mb-3">Share this discussion</p>
-                <div className="grid gap-2">
-                  <div className="flex flex-wrap gap-2">
+            <div className="relative" ref={shareMenuRef}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant={shareOptionsVisible ? "secondary" : "ghost"}
+                    size="sm" 
+                    className="flex items-center gap-1 text-gray-600"
+                    onClick={toggleShareOptions}
+                  >
+                    <Share className="h-4 w-4" />
+                    <span>Share</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Share this discussion
+                </TooltipContent>
+              </Tooltip>
+              
+              {/* Share options dropdown */}
+              {shareOptionsVisible && (
+                <div className="absolute right-0 top-full mt-2 bg-white shadow-lg rounded-md border p-4 z-50 w-64">
+                  <p className="text-sm font-medium mb-3">Share this discussion</p>
+                  <div className="grid gap-2">
                     <Button 
                       onClick={handleCopyLink} 
                       variant="outline" 
                       size="sm"
-                      className="gap-1.5 text-gray-700 w-full"
+                      className="gap-1.5 text-gray-700 w-full justify-start"
                     >
                       <Copy className="h-3.5 w-3.5" />
                       Copy link
@@ -189,27 +210,27 @@ const DiscussionCard: React.FC<DiscussionCardProps> = ({
                       onClick={handleWhatsAppShare} 
                       variant="outline" 
                       size="sm"
-                      className="gap-1.5 text-green-700 border-green-200 bg-green-50 hover:bg-green-100 w-full"
+                      className="gap-1.5 text-green-700 border-green-200 bg-green-50 hover:bg-green-100 w-full justify-start"
                     >
                       <MessageSquare className="h-3.5 w-3.5" />
                       WhatsApp
                     </Button>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
-        
-        {isCommentsExpanded && (
-          <CommentSection 
-            discussionId={discussion.id} 
-            comments={discussion.comments} 
-            onAddComment={onAddComment}
-          />
-        )}
-      </CardFooter>
-    </Card>
+          
+          {isCommentsExpanded && (
+            <CommentSection 
+              discussionId={discussion.id} 
+              comments={discussion.comments} 
+              onAddComment={onAddComment}
+            />
+          )}
+        </CardFooter>
+      </Card>
+    </TooltipProvider>
   );
 };
 
