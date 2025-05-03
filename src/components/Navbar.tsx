@@ -3,6 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { User, BarChart, Home, BookOpen } from 'lucide-react';
+import LoginButton from './LoginButton';
 
 const Navbar = () => {
   return (
@@ -28,10 +29,7 @@ const Navbar = () => {
               <BookOpen className="mr-1.5 h-4 w-4" />
               <span>Resources</span>
             </Link>
-            <Button variant="outline" size="sm" className="ml-4">
-              <User className="mr-2 h-4 w-4" />
-              Sign In
-            </Button>
+            <LoginButton />
           </div>
           
           <div className="md:hidden flex items-center">
