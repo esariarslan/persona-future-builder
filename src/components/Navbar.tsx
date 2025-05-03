@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { User, BarChart, Home, BookOpen } from 'lucide-react';
+import { User, BarChart, Home, BookOpen, MessageCircle } from 'lucide-react';
 import LoginButton from './LoginButton';
 
 const Navbar = () => {
@@ -28,6 +28,10 @@ const Navbar = () => {
             <Link to="/resources" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-persona-blue">
               <BookOpen className="mr-1.5 h-4 w-4" />
               <span>Resources</span>
+            </Link>
+            <Link to="/community" className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-persona-blue">
+              <MessageCircle className="mr-1.5 h-4 w-4" />
+              <span>Community</span>
             </Link>
             <LoginButton />
           </div>
