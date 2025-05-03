@@ -95,9 +95,9 @@ const CommentSection = ({ discussionId, comments, onAddComment }) => {
             className="flex-grow"
             {...register("comment", { required: true })}
           />
-          <Button type="submit" size="sm" className="bg-persona-blue hover:bg-persona-blue/90 flex gap-1">
-            <Send className="h-4 w-4" />
-            <span>Post</span>
+          <Button type="submit" size="sm" className="bg-persona-blue hover:bg-persona-blue/90">
+            <Send className="h-4 w-4 mr-1" />
+            Post
           </Button>
         </form>
       </div>
