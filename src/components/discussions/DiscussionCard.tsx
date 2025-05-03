@@ -5,11 +5,6 @@ import { Button } from '@/components/ui/button';
 import { MessageCircle, ThumbsUp, Share, User, MessageSquare, Copy, Mail, Facebook, Twitter, Linkedin } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import CommentSection from '@/components/comments/CommentSection';
 import { generateShareableUrl, shareContent, shareToWhatsApp } from '@/utils/shareUtils';
 import {
@@ -53,7 +48,7 @@ const DiscussionCard: React.FC<DiscussionCardProps> = ({
   onLike 
 }) => {
   const { toast } = useToast();
-  const [sharePopoverOpen, setSharePopoverOpen] = useState(false);
+  const [shareOptionsVisible, setShareOptionsVisible] = useState(false);
   
   // Create shareable URL for this discussion
   const shareableUrl = generateShareableUrl(discussion.id);
@@ -67,7 +62,6 @@ const DiscussionCard: React.FC<DiscussionCardProps> = ({
         title: "Link copied!",
         description: "Discussion link copied to your clipboard",
       });
-      setSharePopoverOpen(false);
     } catch (error) {
       console.error('Error copying to clipboard:', error);
       toast({
@@ -84,7 +78,6 @@ const DiscussionCard: React.FC<DiscussionCardProps> = ({
       `Persona Parent Community: ${discussion.title}`,
       shareableUrl
     );
-    setSharePopoverOpen(false);
   };
 
   // Handle email share
@@ -92,7 +85,6 @@ const DiscussionCard: React.FC<DiscussionCardProps> = ({
     const subject = encodeURIComponent(`Persona Parent Community: ${discussion.title}`);
     const body = encodeURIComponent(`Check out this discussion in the Persona Parent Community: "${discussion.title}"\n\n${shareableUrl}`);
     window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
-    setSharePopoverOpen(false);
   };
 
   // Social media sharing
@@ -116,7 +108,10 @@ const DiscussionCard: React.FC<DiscussionCardProps> = ({
     }
     
     window.open(url, '_blank', 'width=600,height=400');
-    setSharePopoverOpen(false);
+  };
+
+  const toggleShareOptions = () => {
+    setShareOptionsVisible(!shareOptionsVisible);
   };
 
   return (
@@ -185,89 +180,95 @@ const DiscussionCard: React.FC<DiscussionCardProps> = ({
               </TooltipContent>
             </Tooltip>
           </div>
-          <Popover open={sharePopoverOpen} onOpenChange={setSharePopoverOpen}>
+          
+          <div className="relative">
             <Tooltip>
               <TooltipTrigger asChild>
-                <PopoverTrigger asChild>
-                  <Button variant="ghost" size="sm" className="flex items-center gap-1 text-gray-600">
-                    <Share className="h-4 w-4" />
-                    <span>Share</span>
-                  </Button>
-                </PopoverTrigger>
+                <Button 
+                  variant={shareOptionsVisible ? "secondary" : "ghost"}
+                  size="sm" 
+                  className="flex items-center gap-1 text-gray-600"
+                  onClick={toggleShareOptions}
+                >
+                  <Share className="h-4 w-4" />
+                  <span>Share</span>
+                </Button>
               </TooltipTrigger>
               <TooltipContent>
                 Share this discussion
               </TooltipContent>
             </Tooltip>
-            <PopoverContent className="w-72 p-0" align="end">
-              <div className="p-4 border-b">
-                <h4 className="font-medium text-sm">Share this discussion</h4>
-                <p className="text-xs text-gray-500 mt-1">Choose how you want to share this discussion</p>
-              </div>
+          </div>
+        </div>
+        
+        {shareOptionsVisible && (
+          <div className="w-full mt-4 border-t pt-4">
+            <div>
+              <p className="text-sm font-medium mb-3">Share this discussion</p>
               
-              <div className="p-2">
-                <div className="grid grid-cols-1 gap-1">
+              <div className="grid gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Button 
                     onClick={handleCopyLink} 
-                    variant="ghost" 
-                    className="w-full justify-start gap-2 rounded-md p-2 h-auto text-sm"
+                    variant="outline" 
+                    size="sm"
+                    className="gap-1.5 text-gray-700"
                   >
-                    <Copy className="h-4 w-4" />
+                    <Copy className="h-3.5 w-3.5" />
                     Copy link
                   </Button>
                   
                   <Button 
                     onClick={handleWhatsAppShare} 
-                    variant="ghost" 
-                    className="w-full justify-start gap-2 rounded-md p-2 h-auto text-sm text-green-700"
+                    variant="outline" 
+                    size="sm"
+                    className="gap-1.5 text-green-700 border-green-200 bg-green-50 hover:bg-green-100"
                   >
-                    <MessageSquare className="h-4 w-4" />
-                    Share via WhatsApp
+                    <MessageSquare className="h-3.5 w-3.5" />
+                    WhatsApp
                   </Button>
                   
                   <Button 
                     onClick={handleEmailShare} 
-                    variant="ghost" 
-                    className="w-full justify-start gap-2 rounded-md p-2 h-auto text-sm text-blue-700"
+                    variant="outline" 
+                    size="sm"
+                    className="gap-1.5 text-blue-700 border-blue-200 bg-blue-50 hover:bg-blue-100"
                   >
-                    <Mail className="h-4 w-4" />
-                    Share via Email
+                    <Mail className="h-3.5 w-3.5" />
+                    Email
                   </Button>
                 </div>
-              </div>
-              
-              <div className="p-2 pt-0">
-                <p className="text-xs text-gray-500 px-2 pt-1 pb-2">Share to social media</p>
-                <div className="flex gap-2 justify-around px-2">
+                
+                <div className="flex gap-2 mt-1">
                   <Button 
                     onClick={() => handleSocialShare('facebook')} 
                     variant="outline" 
                     size="icon" 
-                    className="rounded-full h-9 w-9 bg-blue-50 border-blue-200 hover:bg-blue-100"
+                    className="h-8 w-8 rounded-full bg-blue-50 border-blue-200 hover:bg-blue-100"
                   >
-                    <Facebook className="h-4 w-4 text-blue-600" />
+                    <Facebook className="h-3.5 w-3.5 text-blue-600" />
                   </Button>
                   <Button 
                     onClick={() => handleSocialShare('twitter')} 
                     variant="outline" 
                     size="icon" 
-                    className="rounded-full h-9 w-9 bg-sky-50 border-sky-200 hover:bg-sky-100"
+                    className="h-8 w-8 rounded-full bg-sky-50 border-sky-200 hover:bg-sky-100"
                   >
-                    <Twitter className="h-4 w-4 text-sky-500" />
+                    <Twitter className="h-3.5 w-3.5 text-sky-500" />
                   </Button>
                   <Button 
                     onClick={() => handleSocialShare('linkedin')} 
                     variant="outline" 
                     size="icon" 
-                    className="rounded-full h-9 w-9 bg-blue-50 border-blue-200 hover:bg-blue-100"
+                    className="h-8 w-8 rounded-full bg-blue-50 border-blue-200 hover:bg-blue-100"
                   >
-                    <Linkedin className="h-4 w-4 text-blue-700" />
+                    <Linkedin className="h-3.5 w-3.5 text-blue-700" />
                   </Button>
                 </div>
               </div>
-            </PopoverContent>
-          </Popover>
-        </div>
+            </div>
+          </div>
+        )}
         
         {isCommentsExpanded && (
           <CommentSection 
