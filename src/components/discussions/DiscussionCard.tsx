@@ -1,16 +1,23 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, ThumbsUp, User } from 'lucide-react';
+import { MessageCircle, ThumbsUp, User, Share, Copy, MessageSquare } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import CommentSection from '@/components/comments/CommentSection';
+import { useToast } from '@/hooks/use-toast';
+import { generateShareableUrl, shareToWhatsApp } from '@/utils/shareUtils';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/tooltip";
+import { 
+  Popover, 
+  PopoverContent, 
+  PopoverTrigger 
+} from '@/components/ui/popover';
 
 interface Comment {
   id: string;
@@ -46,6 +53,38 @@ const DiscussionCard: React.FC<DiscussionCardProps> = ({
   onAddComment, 
   onLike 
 }) => {
+  const { toast } = useToast();
+
+  // Create shareable URL for this discussion
+  const shareableUrl = generateShareableUrl(discussion.id);
+  
+  // Handle copy to clipboard
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareableUrl);
+      
+      toast({
+        title: "Link copied!",
+        description: "Discussion link copied to your clipboard",
+      });
+    } catch (error) {
+      console.error('Error copying to clipboard:', error);
+      toast({
+        title: "Failed to copy",
+        description: "Please try again or copy the link manually",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  // Handle direct share to WhatsApp
+  const handleWhatsAppShare = () => {
+    shareToWhatsApp(
+      `Persona Parent Community: ${discussion.title}`,
+      shareableUrl
+    );
+  };
+
   return (
     <TooltipProvider>
       <Card className="overflow-hidden hover:shadow-md transition-shadow">
@@ -64,6 +103,43 @@ const DiscussionCard: React.FC<DiscussionCardProps> = ({
                 <span>{discussion.date}</span>
               </div>
             </div>
+            
+            {/* Share button in top right */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <Share className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-56 p-3" align="end">
+                <div className="space-y-2">
+                  <p className="text-sm font-medium mb-2">Share this discussion</p>
+                  <Button 
+                    onClick={handleCopyLink} 
+                    variant="outline" 
+                    size="sm"
+                    className="gap-1.5 text-gray-700 w-full justify-start"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                    Copy link
+                  </Button>
+                  
+                  <Button 
+                    onClick={handleWhatsAppShare} 
+                    variant="outline" 
+                    size="sm"
+                    className="gap-1.5 text-green-700 border-green-200 bg-green-50 hover:bg-green-100 w-full justify-start"
+                  >
+                    <MessageSquare className="h-3.5 w-3.5" />
+                    WhatsApp
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         </CardHeader>
         <CardContent>
