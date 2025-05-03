@@ -6,6 +6,8 @@ import RecommendationCard from '@/components/RecommendationCard';
 import { futureSkills, recommendedActivities } from '@/data/futureSkills';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import AuthLinks from '@/components/AuthLinks';
 
 const Index = () => {
   return (
@@ -22,9 +24,7 @@ const Index = () => {
             <p className="text-xl mb-8 text-white/90">
               Help your child develop the skills they need for tomorrow's world based on their unique personality and interests.
             </p>
-            <Button className="bg-white text-persona-blue hover:bg-white/90">
-              Get Started <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+            <AuthLinks />
           </div>
         </div>
       </section>
@@ -112,9 +112,11 @@ const Index = () => {
           </div>
           
           <div className="text-center mt-10">
-            <Button variant="outline" className="border-persona-blue text-persona-blue hover:bg-persona-blue/10">
-              View More Recommendations <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+            <Link to="/resources">
+              <Button variant="outline" className="border-persona-blue text-persona-blue hover:bg-persona-blue/10">
+                View More Recommendations <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
