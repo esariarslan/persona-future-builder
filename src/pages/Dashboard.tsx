@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -10,7 +9,7 @@ import RecommendationCard from '@/components/RecommendationCard';
 import { recommendedActivities } from '@/data/futureSkills';
 import { useChildren } from '@/hooks/useChildren';
 import { useAuth } from '@/context/AuthContext';
-import { PlusCircle, Pencil, Eye, BookOpen } from 'lucide-react';
+import { PlusCircle, Pencil, Eye, BookOpen, X } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -68,6 +67,8 @@ const DashboardPage = () => {
   // Form states
   const [newObservation, setNewObservation] = useState('');
   const [newInterests, setNewInterests] = useState('');
+  const [interestInput, setInterestInput] = useState('');
+  const [currentInterests, setCurrentInterests] = useState<string[]>([]);
 
   useEffect(() => {
     // Set the first child as selected when data loads
@@ -80,6 +81,13 @@ const DashboardPage = () => {
     // Fetch observations when selectedChild changes
     if (selectedChild) {
       fetchObservations();
+      
+      // Initialize interests from selected child
+      if (selectedChild.interests) {
+        setCurrentInterests(selectedChild.interests);
+      } else {
+        setCurrentInterests([]);
+      }
     }
   }, [selectedChild]);
 
@@ -126,20 +134,31 @@ const DashboardPage = () => {
     }
   };
 
-  const handleAddInterests = async () => {
-    if (!newInterests.trim() || !selectedChild) return;
+  const handleAddInterest = (e: React.KeyboardEvent | React.MouseEvent) => {
+    e.preventDefault();
     
-    // Convert comma-separated interests to an array
-    const interestsArray = newInterests
-      .split(',')
-      .map(interest => interest.trim())
-      .filter(interest => interest.length > 0);
+    if (!interestInput.trim()) return;
+    
+    // Add the interest to the current interests list
+    const updatedInterests = [...currentInterests, interestInput.trim()];
+    setCurrentInterests(updatedInterests);
+    setInterestInput('');
+  };
+
+  const handleRemoveInterest = (index: number) => {
+    const updatedInterests = [...currentInterests];
+    updatedInterests.splice(index, 1);
+    setCurrentInterests(updatedInterests);
+  };
+
+  const handleSaveInterests = async () => {
+    if (!selectedChild) return;
     
     try {
       const { error } = await supabase
         .from('children')
         .update({
-          interests: interestsArray
+          interests: currentInterests
         })
         .eq('id', selectedChild.id);
       
@@ -148,11 +167,10 @@ const DashboardPage = () => {
       // Update the selected child with the new interests
       setSelectedChild({
         ...selectedChild,
-        interests: interestsArray
+        interests: currentInterests
       });
       
       toast.success('Interests updated successfully');
-      setNewInterests('');
       setIsAddInterestsOpen(false);
     } catch (error: any) {
       toast.error('Failed to update interests: ' + error.message);
@@ -269,9 +287,12 @@ const DashboardPage = () => {
                               variant="outline" 
                               size="sm" 
                               className="mt-2 text-xs"
-                              onClick={() => setIsAddInterestsOpen(true)}
+                              onClick={() => {
+                                setCurrentInterests(selectedChild.interests || []);
+                                setIsAddInterestsOpen(true);
+                              }}
                             >
-                              <Pencil className="h-3 w-3 mr-1" /> Add Interests
+                              <Pencil className="h-3 w-3 mr-1" /> {selectedChild.interests?.length ? 'Edit' : 'Add'} Interests
                             </Button>
                           </div>
                           
@@ -434,29 +455,60 @@ const DashboardPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Add Interests Dialog */}
+      {/* Add/Edit Interests Dialog */}
       <Dialog open={isAddInterestsOpen} onOpenChange={setIsAddInterestsOpen}>
         <DialogContent className="sm:max-w-md bg-white">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold text-persona-blue">
-              Update {selectedChild?.first_name}'s Interests
+              {selectedChild?.interests?.length ? 'Edit' : 'Add'} {selectedChild?.first_name}'s Interests
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
               <label htmlFor="interests" className="block text-sm font-medium text-gray-700 mb-2">
-                Enter interests (comma separated)
+                Add interests one by one
               </label>
-              <Input
-                id="interests"
-                placeholder="e.g. dinosaurs, space, music, drawing"
-                value={newInterests}
-                onChange={(e) => setNewInterests(e.target.value)}
-                className="border-gray-300 focus:border-persona-blue focus:ring focus:ring-persona-blue/20 bg-white text-gray-800"
-              />
-              <p className="mt-2 text-xs text-gray-500">
-                Separate each interest with a comma
-              </p>
+              <div className="flex space-x-2">
+                <Input
+                  id="interests"
+                  placeholder="e.g. dinosaurs, space, music"
+                  value={interestInput}
+                  onChange={(e) => setInterestInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddInterest(e)}
+                  className="border-gray-300 focus:border-persona-blue focus:ring focus:ring-persona-blue/20 bg-white text-gray-800"
+                />
+                <Button 
+                  onClick={handleAddInterest}
+                  disabled={!interestInput.trim()}
+                  className="bg-persona-blue hover:bg-persona-blue/90"
+                >
+                  Add
+                </Button>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Current Interests</h4>
+              <div className="flex flex-wrap gap-2 min-h-[40px] p-2 border border-gray-200 rounded-md">
+                {currentInterests.length > 0 ? (
+                  currentInterests.map((interest, index) => (
+                    <div 
+                      key={index} 
+                      className="bg-persona-light-blue text-persona-blue text-xs px-2 py-1 rounded-full flex items-center"
+                    >
+                      {interest}
+                      <button 
+                        onClick={() => handleRemoveInterest(index)}
+                        className="ml-1 text-persona-blue hover:text-persona-blue/80"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-400 text-sm">No interests added yet</p>
+                )}
+              </div>
             </div>
           </div>
           <DialogFooter className="sm:justify-between border-t border-gray-100 pt-4">
@@ -468,9 +520,8 @@ const DashboardPage = () => {
               Cancel
             </Button>
             <Button 
-              onClick={handleAddInterests} 
+              onClick={handleSaveInterests} 
               className="bg-persona-blue hover:bg-persona-blue/90 min-w-[160px] text-white"
-              disabled={!newInterests.trim()}
             >
               Save Interests
             </Button>
