@@ -168,40 +168,38 @@ const DiscussionCard: React.FC<DiscussionCardProps> = ({
                 Share this discussion
               </TooltipContent>
             </Tooltip>
-          </div>
-        </div>
-        
-        {shareOptionsVisible && (
-          <div className="w-full mt-4 border-t pt-4">
-            <div>
-              <p className="text-sm font-medium mb-3">Share this discussion</p>
-              
-              <div className="grid gap-2">
-                <div className="flex flex-wrap gap-2">
-                  <Button 
-                    onClick={handleCopyLink} 
-                    variant="outline" 
-                    size="sm"
-                    className="gap-1.5 text-gray-700"
-                  >
-                    <Copy className="h-3.5 w-3.5" />
-                    Copy link
-                  </Button>
-                  
-                  <Button 
-                    onClick={handleWhatsAppShare} 
-                    variant="outline" 
-                    size="sm"
-                    className="gap-1.5 text-green-700 border-green-200 bg-green-50 hover:bg-green-100"
-                  >
-                    <MessageSquare className="h-3.5 w-3.5" />
-                    WhatsApp
-                  </Button>
+            
+            {/* Share options positioned absolutely to the right */}
+            {shareOptionsVisible && (
+              <div className="absolute right-0 top-full mt-2 bg-white shadow-md rounded-md border p-4 z-10 w-64">
+                <p className="text-sm font-medium mb-3">Share this discussion</p>
+                <div className="grid gap-2">
+                  <div className="flex flex-wrap gap-2">
+                    <Button 
+                      onClick={handleCopyLink} 
+                      variant="outline" 
+                      size="sm"
+                      className="gap-1.5 text-gray-700 w-full"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                      Copy link
+                    </Button>
+                    
+                    <Button 
+                      onClick={handleWhatsAppShare} 
+                      variant="outline" 
+                      size="sm"
+                      className="gap-1.5 text-green-700 border-green-200 bg-green-50 hover:bg-green-100 w-full"
+                    >
+                      <MessageSquare className="h-3.5 w-3.5" />
+                      WhatsApp
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
-        )}
+        </div>
         
         {isCommentsExpanded && (
           <CommentSection 
