@@ -2,11 +2,11 @@
 import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, ThumbsUp, Share, User, MessageSquare, Copy, Mail, Facebook, Twitter, Linkedin } from 'lucide-react';
+import { MessageCircle, ThumbsUp, Share, User, MessageSquare, Copy } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import CommentSection from '@/components/comments/CommentSection';
-import { generateShareableUrl, shareContent, shareToWhatsApp } from '@/utils/shareUtils';
+import { generateShareableUrl, shareToWhatsApp } from '@/utils/shareUtils';
 import {
   Tooltip,
   TooltipContent,
@@ -78,36 +78,6 @@ const DiscussionCard: React.FC<DiscussionCardProps> = ({
       `Persona Parent Community: ${discussion.title}`,
       shareableUrl
     );
-  };
-
-  // Handle email share
-  const handleEmailShare = () => {
-    const subject = encodeURIComponent(`Persona Parent Community: ${discussion.title}`);
-    const body = encodeURIComponent(`Check out this discussion in the Persona Parent Community: "${discussion.title}"\n\n${shareableUrl}`);
-    window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
-  };
-
-  // Social media sharing
-  const handleSocialShare = (platform: string) => {
-    let url = '';
-    const title = encodeURIComponent(`Persona Parent Community: ${discussion.title}`);
-    const shareUrl = encodeURIComponent(shareableUrl);
-    
-    switch (platform) {
-      case 'facebook':
-        url = `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`;
-        break;
-      case 'twitter':
-        url = `https://twitter.com/intent/tweet?text=${title}&url=${shareUrl}`;
-        break;
-      case 'linkedin':
-        url = `https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}`;
-        break;
-      default:
-        return;
-    }
-    
-    window.open(url, '_blank', 'width=600,height=400');
   };
 
   const toggleShareOptions = () => {
@@ -226,43 +196,6 @@ const DiscussionCard: React.FC<DiscussionCardProps> = ({
                   >
                     <MessageSquare className="h-3.5 w-3.5" />
                     WhatsApp
-                  </Button>
-                  
-                  <Button 
-                    onClick={handleEmailShare} 
-                    variant="outline" 
-                    size="sm"
-                    className="gap-1.5 text-blue-700 border-blue-200 bg-blue-50 hover:bg-blue-100"
-                  >
-                    <Mail className="h-3.5 w-3.5" />
-                    Email
-                  </Button>
-                </div>
-                
-                <div className="flex gap-2 mt-1">
-                  <Button 
-                    onClick={() => handleSocialShare('facebook')} 
-                    variant="outline" 
-                    size="icon" 
-                    className="h-8 w-8 rounded-full bg-blue-50 border-blue-200 hover:bg-blue-100"
-                  >
-                    <Facebook className="h-3.5 w-3.5 text-blue-600" />
-                  </Button>
-                  <Button 
-                    onClick={() => handleSocialShare('twitter')} 
-                    variant="outline" 
-                    size="icon" 
-                    className="h-8 w-8 rounded-full bg-sky-50 border-sky-200 hover:bg-sky-100"
-                  >
-                    <Twitter className="h-3.5 w-3.5 text-sky-500" />
-                  </Button>
-                  <Button 
-                    onClick={() => handleSocialShare('linkedin')} 
-                    variant="outline" 
-                    size="icon" 
-                    className="h-8 w-8 rounded-full bg-blue-50 border-blue-200 hover:bg-blue-100"
-                  >
-                    <Linkedin className="h-3.5 w-3.5 text-blue-700" />
                   </Button>
                 </div>
               </div>
