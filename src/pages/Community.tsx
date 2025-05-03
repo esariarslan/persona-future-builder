@@ -69,33 +69,37 @@ const CommentSection = ({ discussionId, comments, onAddComment }) => {
   };
 
   return (
-    <div className="mt-4 border-t pt-4">
-      <h3 className="font-medium text-lg mb-2">Comments ({comments.length})</h3>
+    <div className="mt-6 border-t pt-4">
+      <h3 className="font-medium text-lg mb-4 text-center">Comments ({comments.length})</h3>
       
-      {comments.map((comment) => (
-        <div key={comment.id} className="mb-4 pb-4 border-b last:border-0">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="bg-gray-100 rounded-full p-1">
-              <User className="h-4 w-4 text-gray-500" />
+      <div className="space-y-6">
+        {comments.map((comment) => (
+          <div key={comment.id} className="pb-4 border-b last:border-0">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="bg-gray-100 rounded-full p-1">
+                <User className="h-4 w-4 text-gray-500" />
+              </div>
+              <span className="font-medium">{comment.author}</span>
+              <span className="text-xs text-gray-500">· {comment.date}</span>
             </div>
-            <span className="font-medium">{comment.author}</span>
-            <span className="text-xs text-gray-500">· {comment.date}</span>
+            <p className="text-gray-700 ml-7">{comment.content}</p>
           </div>
-          <p className="text-gray-700 pl-7">{comment.content}</p>
-        </div>
-      ))}
+        ))}
+      </div>
       
-      <form onSubmit={handleSubmit(submitComment)} className="mt-4 flex gap-2">
-        <Input 
-          placeholder="Add a comment..." 
-          className="flex-grow"
-          {...register("comment", { required: true })}
-        />
-        <Button type="submit" size="sm" className="bg-persona-blue hover:bg-persona-blue/90 flex gap-1">
-          <Send className="h-4 w-4" />
-          <span>Post</span>
-        </Button>
-      </form>
+      <div className="mt-6">
+        <form onSubmit={handleSubmit(submitComment)} className="flex gap-2">
+          <Input 
+            placeholder="Add a comment..." 
+            className="flex-grow"
+            {...register("comment", { required: true })}
+          />
+          <Button type="submit" size="sm" className="bg-persona-blue hover:bg-persona-blue/90 flex gap-1">
+            <Send className="h-4 w-4" />
+            <span>Post</span>
+          </Button>
+        </form>
+      </div>
     </div>
   );
 };
