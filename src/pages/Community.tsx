@@ -6,11 +6,17 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessageCircle, ThumbsUp, Share, User, Send } from 'lucide-react';
+import { MessageCircle, ThumbsUp, Share, User, Send, WhatsApp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { useToast } from '@/hooks/use-toast';
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { generateShareableUrl, shareContent, shareToWhatsApp } from '@/utils/shareUtils';
 
 // Temporary mock data for discussions
 const initialDiscussions = [
@@ -331,6 +337,37 @@ const Community = () => {
 
 // Discussion Card Component
 const DiscussionCard = ({ discussion, onToggleComments, isCommentsExpanded, onAddComment, onLike }) => {
+  const { toast } = useToast();
+  
+  // Create shareable URL for this discussion
+  const shareableUrl = generateShareableUrl(discussion.id);
+  
+  // Handle the share button click
+  const handleShare = async () => {
+    try {
+      await shareContent(
+        `Persona Parent Community: ${discussion.title}`,
+        `Check out this discussion in the Persona Parent Community: "${discussion.title}"`,
+        shareableUrl
+      );
+      
+      toast({
+        title: "Link copied to clipboard",
+        description: "You can now paste the link anywhere to share this discussion",
+      });
+    } catch (error) {
+      console.error('Error sharing:', error);
+    }
+  };
+  
+  // Handle direct share to WhatsApp
+  const handleWhatsAppShare = () => {
+    shareToWhatsApp(
+      `Persona Parent Community: ${discussion.title}`,
+      shareableUrl
+    );
+  };
+
   return (
     <Card className="overflow-hidden hover:shadow-md transition-shadow">
       <CardHeader>
@@ -382,10 +419,37 @@ const DiscussionCard = ({ discussion, onToggleComments, isCommentsExpanded, onAd
               <span>{discussion.likes}</span>
             </Button>
           </div>
-          <Button variant="ghost" size="sm" className="flex items-center gap-1 text-gray-600">
-            <Share className="h-4 w-4" />
-            <span>Share</span>
-          </Button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="sm" className="flex items-center gap-1 text-gray-600">
+                <Share className="h-4 w-4" />
+                <span>Share</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-4" align="end">
+              <div className="space-y-3">
+                <h4 className="font-medium text-sm">Share this discussion</h4>
+                <div className="flex flex-col gap-2">
+                  <Button 
+                    onClick={handleShare} 
+                    variant="outline" 
+                    className="w-full justify-start gap-2"
+                  >
+                    <Share className="h-4 w-4" />
+                    Copy link
+                  </Button>
+                  <Button 
+                    onClick={handleWhatsAppShare} 
+                    variant="outline" 
+                    className="w-full justify-start gap-2 bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+                  >
+                    <WhatsApp className="h-4 w-4" />
+                    Share via WhatsApp
+                  </Button>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
         
         {isCommentsExpanded && (
