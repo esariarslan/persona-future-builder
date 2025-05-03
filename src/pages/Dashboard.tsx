@@ -3,15 +3,20 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import Navbar from '@/components/Navbar';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import Dashboard from '@/components/Dashboard';
 import LearningPath from '@/components/LearningPath';
 import RecommendationCard from '@/components/RecommendationCard';
 import { recommendedActivities } from '@/data/futureSkills';
 import { useChildren } from '@/hooks/useChildren';
 import { useAuth } from '@/context/AuthContext';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Pencil, Eye, BookOpen } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import { supabase } from '@/integrations/supabase/client';
 
 // Sample activities for the learning path
 const sampleLearningActivities = [
@@ -49,6 +54,20 @@ const DashboardPage = () => {
   const { children, loading } = useChildren();
   const [selectedChild, setSelectedChild] = useState<any | null>(null);
   const navigate = useNavigate();
+  
+  // State for observations
+  const [observations, setObservations] = useState<any[]>([]);
+  const [observationsLoading, setObservationsLoading] = useState(false);
+
+  // Dialog states
+  const [isAddObservationOpen, setIsAddObservationOpen] = useState(false);
+  const [isViewObservationOpen, setIsViewObservationOpen] = useState(false);
+  const [isAddInterestsOpen, setIsAddInterestsOpen] = useState(false);
+  const [selectedObservation, setSelectedObservation] = useState<any | null>(null);
+  
+  // Form states
+  const [newObservation, setNewObservation] = useState('');
+  const [newInterests, setNewInterests] = useState('');
 
   useEffect(() => {
     // Set the first child as selected when data loads
@@ -56,6 +75,94 @@ const DashboardPage = () => {
       setSelectedChild(children[0]);
     }
   }, [children, selectedChild]);
+
+  useEffect(() => {
+    // Fetch observations when selectedChild changes
+    if (selectedChild) {
+      fetchObservations();
+    }
+  }, [selectedChild]);
+
+  const fetchObservations = async () => {
+    if (!selectedChild) return;
+    
+    setObservationsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('observations')
+        .select('*')
+        .eq('child_id', selectedChild.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setObservations(data || []);
+    } catch (error: any) {
+      console.error('Error fetching observations:', error.message);
+    } finally {
+      setObservationsLoading(false);
+    }
+  };
+
+  const handleAddObservation = async () => {
+    if (!newObservation.trim() || !selectedChild) return;
+    
+    try {
+      const { error } = await supabase
+        .from('observations')
+        .insert([{
+          child_id: selectedChild.id,
+          content: newObservation,
+          observation_type: 'manual'
+        }]);
+      
+      if (error) throw error;
+      
+      toast.success('Observation added successfully');
+      setNewObservation('');
+      setIsAddObservationOpen(false);
+      fetchObservations();
+    } catch (error: any) {
+      toast.error('Failed to add observation: ' + error.message);
+    }
+  };
+
+  const handleAddInterests = async () => {
+    if (!newInterests.trim() || !selectedChild) return;
+    
+    // Convert comma-separated interests to an array
+    const interestsArray = newInterests
+      .split(',')
+      .map(interest => interest.trim())
+      .filter(interest => interest.length > 0);
+    
+    try {
+      const { error } = await supabase
+        .from('children')
+        .update({
+          interests: interestsArray
+        })
+        .eq('id', selectedChild.id);
+      
+      if (error) throw error;
+      
+      // Update the selected child with the new interests
+      setSelectedChild({
+        ...selectedChild,
+        interests: interestsArray
+      });
+      
+      toast.success('Interests updated successfully');
+      setNewInterests('');
+      setIsAddInterestsOpen(false);
+    } catch (error: any) {
+      toast.error('Failed to update interests: ' + error.message);
+    }
+  };
+
+  const handleViewObservation = (observation: any) => {
+    setSelectedObservation(observation);
+    setIsViewObservationOpen(true);
+  };
 
   const handleAddChild = () => {
     navigate('/');
@@ -158,16 +265,65 @@ const DashboardPage = () => {
                             ) : (
                               <p className="text-gray-500 text-sm">No interests specified yet</p>
                             )}
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="mt-2 text-xs"
+                              onClick={() => setIsAddInterestsOpen(true)}
+                            >
+                              <Pencil className="h-3 w-3 mr-1" /> Add Interests
+                            </Button>
                           </div>
                           
                           <div>
-                            <h4 className="text-sm font-medium text-gray-500 mb-1">Most Recent Observation</h4>
-                            <p className="text-sm text-gray-600 line-clamp-3">
-                              Observations about {selectedChild.first_name}'s interests and development will appear here
-                            </p>
+                            <div className="flex justify-between items-center mb-1">
+                              <h4 className="text-sm font-medium text-gray-500">Observations</h4>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="text-xs"
+                                onClick={() => setIsAddObservationOpen(true)}
+                              >
+                                <PlusCircle className="h-3 w-3 mr-1" /> Add
+                              </Button>
+                            </div>
+                            
+                            {observationsLoading ? (
+                              <p className="text-sm text-gray-500">Loading observations...</p>
+                            ) : observations.length > 0 ? (
+                              <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                                {observations.map((obs) => (
+                                  <div 
+                                    key={obs.id} 
+                                    className="bg-white p-2 rounded-md shadow-sm border border-gray-100 cursor-pointer hover:bg-gray-50"
+                                    onClick={() => handleViewObservation(obs)}
+                                  >
+                                    <div className="flex justify-between items-start">
+                                      <p className="text-xs text-gray-500">
+                                        {new Date(obs.created_at).toLocaleDateString()}
+                                      </p>
+                                      <Eye className="h-3 w-3 text-gray-400 hover:text-gray-600" />
+                                    </div>
+                                    <p className="text-sm line-clamp-2 mt-1">{obs.content}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-sm text-gray-500">No observations recorded yet</p>
+                            )}
                           </div>
                         </div>
                       </CardContent>
+                      <CardFooter className="pt-2 pb-4 flex justify-center">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="text-persona-blue border-persona-blue hover:bg-persona-light-blue"
+                          onClick={() => setIsAddObservationOpen(true)}
+                        >
+                          <BookOpen className="h-4 w-4 mr-2" /> Record New Observation
+                        </Button>
+                      </CardFooter>
                     </Card>
                   </div>
                   
@@ -202,6 +358,125 @@ const DashboardPage = () => {
           </>
         )}
       </div>
+
+      {/* Add Observation Dialog */}
+      <Dialog open={isAddObservationOpen} onOpenChange={setIsAddObservationOpen}>
+        <DialogContent className="sm:max-w-md bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-persona-blue">
+              Add New Observation
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="observation" className="text-sm font-medium text-gray-700">
+                  What have you observed about {selectedChild?.first_name}?
+                </label>
+                <span className={`text-xs ${newObservation.length > 400 ? 'text-persona-orange' : 'text-gray-500'}`}>
+                  {newObservation.length}/500
+                </span>
+              </div>
+              <Textarea
+                id="observation"
+                placeholder="Describe what you've observed about the child's behavior, interests, or development..."
+                value={newObservation}
+                onChange={(e) => setNewObservation(e.target.value.substring(0, 500))}
+                className="min-h-[150px] border-gray-300 focus:border-persona-blue focus:ring focus:ring-persona-blue/20 bg-white text-gray-800"
+              />
+            </div>
+          </div>
+          <DialogFooter className="sm:justify-between border-t border-gray-100 pt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsAddObservationOpen(false)}
+              className="border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleAddObservation} 
+              className="bg-persona-blue hover:bg-persona-blue/90 min-w-[160px] text-white"
+              disabled={!newObservation.trim()}
+            >
+              Save Observation
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Observation Dialog */}
+      <Dialog open={isViewObservationOpen} onOpenChange={setIsViewObservationOpen}>
+        <DialogContent className="sm:max-w-md bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-persona-blue">
+              Observation Details
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="bg-persona-soft-bg p-4 rounded-md">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-gray-500">
+                  Recorded on {selectedObservation ? new Date(selectedObservation.created_at).toLocaleDateString() : ''}
+                </span>
+              </div>
+              <p className="text-gray-800 whitespace-pre-wrap">{selectedObservation?.content}</p>
+            </div>
+          </div>
+          <DialogFooter className="border-t border-gray-100 pt-4">
+            <Button 
+              onClick={() => setIsViewObservationOpen(false)} 
+              className="bg-persona-blue hover:bg-persona-blue/90 text-white"
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Interests Dialog */}
+      <Dialog open={isAddInterestsOpen} onOpenChange={setIsAddInterestsOpen}>
+        <DialogContent className="sm:max-w-md bg-white">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-persona-blue">
+              Update {selectedChild?.first_name}'s Interests
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <label htmlFor="interests" className="block text-sm font-medium text-gray-700 mb-2">
+                Enter interests (comma separated)
+              </label>
+              <Input
+                id="interests"
+                placeholder="e.g. dinosaurs, space, music, drawing"
+                value={newInterests}
+                onChange={(e) => setNewInterests(e.target.value)}
+                className="border-gray-300 focus:border-persona-blue focus:ring focus:ring-persona-blue/20 bg-white text-gray-800"
+              />
+              <p className="mt-2 text-xs text-gray-500">
+                Separate each interest with a comma
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="sm:justify-between border-t border-gray-100 pt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsAddInterestsOpen(false)}
+              className="border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleAddInterests} 
+              className="bg-persona-blue hover:bg-persona-blue/90 min-w-[160px] text-white"
+              disabled={!newInterests.trim()}
+            >
+              Save Interests
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
