@@ -1,6 +1,16 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Chart as ChartJS,
+  RadialLinearScale,
+  ArcElement,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import { ChartContainer, ChartTooltipContent, ChartTooltip } from '@/components/ui/chart';
+import { ResponsiveRadar } from '@nivo/radar';
+import { PieChart, Pie, Cell } from 'recharts';
 
 interface SkillArea {
   name: string;
@@ -19,10 +29,66 @@ const Dashboard: React.FC = () => {
     { name: "Emotional Intelligence", progress: 65, future: true },
   ];
 
+  // Calculate overall progress
+  const overallProgress = Math.round(skillAreas.reduce((sum, skill) => sum + skill.progress, 0) / skillAreas.length);
+
+  // Prepare data for the radar chart
+  const radarData = [
+    {
+      "skill": "Creativity",
+      "value": 75,
+    },
+    {
+      "skill": "Analytical",
+      "value": 45,
+    },
+    {
+      "skill": "Performance",
+      "value": 60,
+    },
+    {
+      "skill": "Leadership",
+      "value": 40,
+    },
+    {
+      "skill": "Science",
+      "value": 30,
+    }
+  ];
+
+  // Data for progress pie chart
+  const pieData = [
+    { name: "Progress", value: overallProgress, color: "#4C8BF5" },
+    { name: "Remaining", value: 100 - overallProgress, color: "#E0E0E0" }
+  ];
+
   return (
     <Card className="w-full shadow-md">
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-2xl text-persona-blue">Skills Dashboard</CardTitle>
+        <div className="flex items-center bg-persona-light-blue p-2 rounded-full">
+          <div className="h-16 w-16 relative">
+            <PieChart width={64} height={64}>
+              <Pie
+                data={pieData}
+                cx="50%"
+                cy="50%"
+                innerRadius={22}
+                outerRadius={30}
+                dataKey="value"
+                startAngle={90}
+                endAngle={-270}
+              >
+                {pieData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+            </PieChart>
+            <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center text-persona-blue font-bold">
+              {overallProgress}%
+            </div>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -39,11 +105,11 @@ const Dashboard: React.FC = () => {
                 </div>
                 <span className="text-xs font-medium">{skill.progress}%</span>
               </div>
-              <div className="skill-progress">
+              <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
                 <div 
-                  className="skill-progress-bar" 
-                  style={{ '--progress-value': `${skill.progress}%` } as React.CSSProperties} 
-                />
+                  className="h-full bg-gradient-to-r from-persona-blue to-persona-green rounded-full"
+                  style={{ width: `${skill.progress}%` }}
+                ></div>
               </div>
             </div>
           ))}
