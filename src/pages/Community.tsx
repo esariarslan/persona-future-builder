@@ -6,17 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessageCircle, ThumbsUp, Share, User, Send, MessageSquare } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
-import { useForm } from 'react-hook-form';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { generateShareableUrl, shareContent, shareToWhatsApp } from '@/utils/shareUtils';
+import DiscussionCard from '@/components/discussions/DiscussionCard';
 
 // Temporary mock data for discussions
 const initialDiscussions = [
@@ -59,51 +50,6 @@ const initialDiscussions = [
     tags: ['Social Skills', 'Playgroups', 'Shy Children']
   }
 ];
-
-// Comment section component
-const CommentSection = ({ discussionId, comments, onAddComment }) => {
-  const { register, handleSubmit, reset, formState: { errors } } = useForm();
-  
-  const submitComment = (data) => {
-    onAddComment(discussionId, data.comment);
-    reset();
-  };
-
-  return (
-    <div className="mt-6 border-t pt-4">
-      <h3 className="font-medium text-lg mb-4">Comments ({comments.length})</h3>
-      
-      <div className="space-y-6">
-        {comments.map((comment) => (
-          <div key={comment.id} className="pb-4 border-b last:border-0">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="bg-gray-100 rounded-full p-1">
-                <User className="h-4 w-4 text-gray-500" />
-              </div>
-              <span className="font-medium">{comment.author}</span>
-              <span className="text-xs text-gray-500">· {comment.date}</span>
-            </div>
-            <p className="text-gray-700 ml-7">{comment.content}</p>
-          </div>
-        ))}
-      </div>
-      
-      <div className="mt-6">
-        <form onSubmit={handleSubmit(submitComment)} className="flex gap-2">
-          <Input 
-            placeholder="Add a comment..." 
-            className="flex-grow"
-            {...register("comment", { required: true })}
-          />
-          <Button type="submit" size="sm" className="bg-persona-blue hover:bg-persona-blue/90">
-            <Send className="h-4 w-4 mr-1" />
-            Post
-          </Button>
-        </form>
-      </div>
-    </div>
-  );
-};
 
 const Community = () => {
   const [discussions, setDiscussions] = useState(initialDiscussions);
@@ -336,135 +282,6 @@ const Community = () => {
         </Tabs>
       </div>
     </div>
-  );
-};
-
-// Discussion Card Component
-const DiscussionCard = ({ discussion, onToggleComments, isCommentsExpanded, onAddComment, onLike }) => {
-  const { toast } = useToast();
-  
-  // Create shareable URL for this discussion
-  const shareableUrl = generateShareableUrl(discussion.id);
-  
-  // Handle the share button click
-  const handleShare = async () => {
-    try {
-      await shareContent(
-        `Persona Parent Community: ${discussion.title}`,
-        `Check out this discussion in the Persona Parent Community: "${discussion.title}"`,
-        shareableUrl
-      );
-      
-      toast({
-        title: "Link copied to clipboard",
-        description: "You can now paste the link anywhere to share this discussion",
-      });
-    } catch (error) {
-      console.error('Error sharing:', error);
-    }
-  };
-  
-  // Handle direct share to WhatsApp
-  const handleWhatsAppShare = () => {
-    shareToWhatsApp(
-      `Persona Parent Community: ${discussion.title}`,
-      shareableUrl
-    );
-  };
-
-  return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow">
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-xl text-persona-blue hover:text-persona-blue/80 cursor-pointer">
-              {discussion.title}
-            </CardTitle>
-            <div className="flex items-center mt-2 text-sm text-gray-500">
-              <div className="flex items-center">
-                <User className="h-4 w-4 mr-1" />
-                <span>{discussion.author}</span>
-              </div>
-              <span className="mx-2">•</span>
-              <span>{discussion.date}</span>
-            </div>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <p className="text-gray-700">{discussion.content}</p>
-        <div className="flex flex-wrap gap-2 mt-4">
-          {discussion.tags.map((tag, index) => (
-            <Badge key={index} variant="outline" className="bg-persona-soft-gray text-gray-700">
-              {tag}
-            </Badge>
-          ))}
-        </div>
-      </CardContent>
-      <CardFooter className="border-t pt-4 flex flex-col">
-        <div className="w-full flex justify-between">
-          <div className="flex gap-6">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="flex items-center gap-1 text-gray-600"
-              onClick={() => onToggleComments(discussion.id)}
-            >
-              <MessageCircle className="h-4 w-4" />
-              <span>{discussion.comments.length}</span>
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className={`flex items-center gap-1 ${discussion.liked ? 'text-persona-blue' : 'text-gray-600'}`}
-              onClick={() => onLike(discussion.id)}
-            >
-              <ThumbsUp className={`h-4 w-4 ${discussion.liked ? 'fill-persona-blue' : ''}`} />
-              <span>{discussion.likes}</span>
-            </Button>
-          </div>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="ghost" size="sm" className="flex items-center gap-1 text-gray-600">
-                <Share className="h-4 w-4" />
-                <span>Share</span>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-64 p-4" align="end">
-              <div className="space-y-3">
-                <h4 className="font-medium text-sm">Share this discussion</h4>
-                <div className="flex flex-col gap-2">
-                  <Button 
-                    onClick={handleShare} 
-                    variant="outline" 
-                    className="w-full justify-start gap-2"
-                  >
-                    <Share className="h-4 w-4" />
-                    Copy link
-                  </Button>
-                  <Button 
-                    onClick={handleWhatsAppShare} 
-                    variant="outline" 
-                    className="w-full justify-start gap-2 bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
-                  >
-                    <MessageSquare className="h-4 w-4" />
-                    Share via WhatsApp
-                  </Button>
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
-        </div>
-        
-        {isCommentsExpanded && (
-          <CommentSection 
-            discussionId={discussion.id} 
-            comments={discussion.comments} 
-            onAddComment={onAddComment}
-          />
-        )}
-      </CardFooter>
-    </Card>
   );
 };
 
