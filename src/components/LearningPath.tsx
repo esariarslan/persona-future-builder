@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, Calendar, Pencil } from "lucide-react";
+import { Check, Calendar, Pencil, BookOpen, Award } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ const LearningPath: React.FC<LearningPathProps> = ({ activities: initialActiviti
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentActivity, setCurrentActivity] = useState<Activity | null>(null);
   const [memo, setMemo] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Calculate overall progress
   const completedActivities = activities.filter(activity => activity.completed).length;
@@ -43,16 +44,35 @@ const LearningPath: React.FC<LearningPathProps> = ({ activities: initialActiviti
   const handleMarkAsCompleted = () => {
     if (!currentActivity) return;
     
-    const updatedActivities = activities.map(activity => {
-      if (activity.id === currentActivity.id) {
-        return { ...activity, completed: true, memo: memo.trim() || undefined };
-      }
-      return activity;
-    });
+    setIsSubmitting(true);
     
-    setActivities(updatedActivities);
-    setIsDialogOpen(false);
-    toast.success("Activity marked as completed!");
+    // Simulate a small delay to show loading state
+    setTimeout(() => {
+      const updatedActivities = activities.map(activity => {
+        if (activity.id === currentActivity.id) {
+          return { ...activity, completed: true, memo: memo.trim() || undefined };
+        }
+        return activity;
+      });
+      
+      setActivities(updatedActivities);
+      setIsDialogOpen(false);
+      setIsSubmitting(false);
+      toast.success("Activity completed successfully!", {
+        description: "Your progress has been updated."
+      });
+    }, 500);
+  };
+
+  const getActivityIcon = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'workshop':
+        return <BookOpen className="h-4 w-4 mr-1" />;
+      case 'course':
+        return <Award className="h-4 w-4 mr-1" />;
+      default:
+        return <Calendar className="h-4 w-4 mr-1" />;
+    }
   };
 
   return (
@@ -83,10 +103,11 @@ const LearningPath: React.FC<LearningPathProps> = ({ activities: initialActiviti
                     </Badge>
                   </div>
                   <div className="flex items-center text-sm text-gray-500 mt-1">
+                    {getActivityIcon(activity.type)}
+                    <span>{activity.type}</span>
+                    <span className="mx-2">•</span>
                     <Calendar className="h-3 w-3 mr-1" />
                     <span>{activity.date}</span>
-                    <span className="mx-2">•</span>
-                    <span>{activity.type}</span>
                   </div>
                   <p className="text-gray-600 mt-2">{activity.description}</p>
                   
@@ -122,30 +143,48 @@ const LearningPath: React.FC<LearningPathProps> = ({ activities: initialActiviti
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Mark Activity as Completed</DialogTitle>
+            <DialogTitle className="text-xl font-semibold text-persona-blue">
+              Activity Completion
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div>
-              <h4 className="font-medium mb-2">{currentActivity?.title}</h4>
-              <p className="text-sm text-gray-500">{currentActivity?.description}</p>
+            <div className="bg-persona-light-blue p-4 rounded-md">
+              <h4 className="font-medium text-lg text-persona-blue mb-1">{currentActivity?.title}</h4>
+              <p className="text-gray-600">{currentActivity?.description}</p>
             </div>
+            
             <div>
-              <label htmlFor="memo" className="block text-sm font-medium mb-1">
-                Add a memo (optional)
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="memo" className="text-sm font-medium text-gray-700 flex items-center">
+                  <Pencil className="h-4 w-4 mr-1 text-persona-purple" />
+                  Add reflection notes (optional)
+                </label>
+                <span className="text-xs text-gray-500">{memo.length}/500</span>
+              </div>
               <Textarea
                 id="memo"
-                placeholder="Write your thoughts, observations, or notes about this activity..."
+                placeholder="What did you learn? What went well? What could be improved next time?"
                 value={memo}
-                onChange={(e) => setMemo(e.target.value)}
-                className="min-h-[100px]"
+                onChange={(e) => setMemo(e.target.value.substring(0, 500))}
+                className="min-h-[120px] border-gray-300 focus:border-persona-blue focus:ring focus:ring-persona-blue/20"
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleMarkAsCompleted} className="bg-persona-blue hover:bg-persona-blue/90">
-              Mark as Completed
+          <DialogFooter className="sm:justify-between">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsDialogOpen(false)}
+              className="border-gray-300"
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleMarkAsCompleted} 
+              className="bg-persona-green hover:bg-persona-green/90 min-w-[160px]"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Saving...' : 'Complete Activity'}
             </Button>
           </DialogFooter>
         </DialogContent>
