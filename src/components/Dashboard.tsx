@@ -1,15 +1,6 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Chart as ChartJS,
-  RadialLinearScale,
-  ArcElement,
-  Tooltip,
-  Legend,
-} from 'chart.js';
-import { ChartContainer, ChartTooltipContent, ChartTooltip } from '@/components/ui/chart';
-import { ResponsiveRadar } from '@nivo/radar';
 import { PieChart, Pie, Cell } from 'recharts';
 
 interface SkillArea {
@@ -31,30 +22,6 @@ const Dashboard: React.FC = () => {
 
   // Calculate overall progress
   const overallProgress = Math.round(skillAreas.reduce((sum, skill) => sum + skill.progress, 0) / skillAreas.length);
-
-  // Prepare data for the radar chart
-  const radarData = [
-    {
-      "skill": "Creativity",
-      "value": 75,
-    },
-    {
-      "skill": "Analytical",
-      "value": 45,
-    },
-    {
-      "skill": "Performance",
-      "value": 60,
-    },
-    {
-      "skill": "Leadership",
-      "value": 40,
-    },
-    {
-      "skill": "Science",
-      "value": 30,
-    }
-  ];
 
   // Data for progress pie chart
   const pieData = [
