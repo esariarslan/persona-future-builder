@@ -6,8 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessageCircle, ThumbsUp, Share, User } from 'lucide-react';
+import { MessageCircle, ThumbsUp, Share, User, Send } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
+import { useForm } from 'react-hook-form';
+import { useToast } from '@/hooks/use-toast';
 
 // Temporary mock data for discussions
 const initialDiscussions = [
@@ -17,8 +20,12 @@ const initialDiscussions = [
     content: 'I\'m looking for activities that can help my 5-year-old develop critical thinking skills. What has worked for your children?',
     author: 'Sarah Johnson',
     date: '2 days ago',
-    comments: 12,
+    comments: [
+      { id: '1-1', author: 'Michael Chen', date: '1 day ago', content: 'Puzzle games worked really well for my daughter. We started with simple jigsaw puzzles and gradually increased difficulty.' },
+      { id: '1-2', author: 'Emma Williams', date: '10 hours ago', content: 'We play "spot the difference" games and ask open-ended questions during story time. This has helped my son develop comparative thinking skills.' }
+    ],
     likes: 24,
+    liked: false,
     tags: ['Critical Thinking', 'Activities', 'Early Development']
   },
   {
@@ -27,8 +34,11 @@ const initialDiscussions = [
     content: 'My 3-year-old has been having frequent tantrums lately. I\'m looking for positive discipline strategies that have worked for other parents.',
     author: 'Michael Chen',
     date: '5 days ago',
-    comments: 28,
+    comments: [
+      { id: '2-1', author: 'Sarah Johnson', date: '4 days ago', content: 'Acknowledging their feelings helped us a lot. "I can see you\'re upset" validates their emotions while staying calm yourself.' }
+    ],
     likes: 42,
+    liked: false,
     tags: ['Discipline', 'Emotional Development', 'Toddlers']
   },
   {
@@ -37,11 +47,53 @@ const initialDiscussions = [
     content: 'My daughter is quite shy and I\'d like to find a supportive playgroup environment where she can gradually build confidence. Any recommendations?',
     author: 'Emma Williams',
     date: '1 week ago',
-    comments: 8,
+    comments: [],
     likes: 15,
+    liked: false,
     tags: ['Social Skills', 'Playgroups', 'Shy Children']
   }
 ];
+
+// Comment section component
+const CommentSection = ({ discussionId, comments, onAddComment }) => {
+  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+  
+  const submitComment = (data) => {
+    onAddComment(discussionId, data.comment);
+    reset();
+  };
+
+  return (
+    <div className="mt-4 border-t pt-4">
+      <h3 className="font-medium text-lg mb-2">Comments ({comments.length})</h3>
+      
+      {comments.map((comment) => (
+        <div key={comment.id} className="mb-4 pb-4 border-b last:border-0">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="bg-gray-100 rounded-full p-1">
+              <User className="h-4 w-4 text-gray-500" />
+            </div>
+            <span className="font-medium">{comment.author}</span>
+            <span className="text-xs text-gray-500">· {comment.date}</span>
+          </div>
+          <p className="text-gray-700 pl-7">{comment.content}</p>
+        </div>
+      ))}
+      
+      <form onSubmit={handleSubmit(submitComment)} className="mt-4 flex gap-2">
+        <Input 
+          placeholder="Add a comment..." 
+          className="flex-grow"
+          {...register("comment", { required: true })}
+        />
+        <Button type="submit" size="sm" className="bg-persona-blue hover:bg-persona-blue/90 flex gap-1">
+          <Send className="h-4 w-4" />
+          <span>Post</span>
+        </Button>
+      </form>
+    </div>
+  );
+};
 
 const Community = () => {
   const [discussions, setDiscussions] = useState(initialDiscussions);
@@ -49,6 +101,8 @@ const Community = () => {
   const [newDiscussionContent, setNewDiscussionContent] = useState('');
   const [showNewDiscussionForm, setShowNewDiscussionForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [expandedComments, setExpandedComments] = useState({});
+  const { toast } = useToast();
 
   const handleCreateDiscussion = () => {
     if (newDiscussionTitle.trim() === '' || newDiscussionContent.trim() === '') {
@@ -61,8 +115,9 @@ const Community = () => {
       content: newDiscussionContent,
       author: 'You', // In a real app, this would come from the authenticated user
       date: 'Just now',
-      comments: 0,
+      comments: [],
       likes: 0,
+      liked: false,
       tags: ['New Discussion']
     };
 
@@ -70,6 +125,56 @@ const Community = () => {
     setNewDiscussionTitle('');
     setNewDiscussionContent('');
     setShowNewDiscussionForm(false);
+  };
+
+  const toggleComments = (discussionId) => {
+    setExpandedComments(prev => ({
+      ...prev,
+      [discussionId]: !prev[discussionId]
+    }));
+  };
+
+  const handleAddComment = (discussionId, commentText) => {
+    if (!commentText.trim()) return;
+    
+    setDiscussions(currentDiscussions => 
+      currentDiscussions.map(discussion => {
+        if (discussion.id === discussionId) {
+          const newComment = {
+            id: `${discussionId}-${Date.now()}`,
+            author: 'You', // In a real app, this would be the authenticated user
+            date: 'Just now',
+            content: commentText
+          };
+          return {
+            ...discussion,
+            comments: [...discussion.comments, newComment]
+          };
+        }
+        return discussion;
+      })
+    );
+
+    toast({
+      title: "Comment added",
+      description: "Your comment has been posted successfully",
+    });
+  };
+
+  const handleLike = (discussionId) => {
+    setDiscussions(currentDiscussions => 
+      currentDiscussions.map(discussion => {
+        if (discussion.id === discussionId) {
+          const isLiked = discussion.liked;
+          return {
+            ...discussion,
+            likes: isLiked ? discussion.likes - 1 : discussion.likes + 1,
+            liked: !isLiked
+          };
+        }
+        return discussion;
+      })
+    );
   };
 
   const filteredDiscussions = discussions.filter(discussion => 
@@ -158,7 +263,14 @@ const Community = () => {
             {filteredDiscussions.length > 0 ? (
               <div className="space-y-6">
                 {filteredDiscussions.map((discussion) => (
-                  <DiscussionCard key={discussion.id} discussion={discussion} />
+                  <DiscussionCard 
+                    key={discussion.id} 
+                    discussion={discussion} 
+                    onToggleComments={toggleComments}
+                    isCommentsExpanded={!!expandedComments[discussion.id]}
+                    onAddComment={handleAddComment}
+                    onLike={handleLike}
+                  />
                 ))}
               </div>
             ) : (
@@ -171,7 +283,14 @@ const Community = () => {
           <TabsContent value="popular">
             <div className="space-y-6">
               {filteredDiscussions.sort((a, b) => b.likes - a.likes).map((discussion) => (
-                <DiscussionCard key={discussion.id} discussion={discussion} />
+                <DiscussionCard 
+                  key={discussion.id} 
+                  discussion={discussion} 
+                  onToggleComments={toggleComments}
+                  isCommentsExpanded={!!expandedComments[discussion.id]}
+                  onAddComment={handleAddComment}
+                  onLike={handleLike}
+                />
               ))}
             </div>
           </TabsContent>
@@ -179,14 +298,28 @@ const Community = () => {
             <div className="space-y-6">
               {/* In a real app, you'd sort by actual dates */}
               {filteredDiscussions.map((discussion) => (
-                <DiscussionCard key={discussion.id} discussion={discussion} />
+                <DiscussionCard 
+                  key={discussion.id} 
+                  discussion={discussion} 
+                  onToggleComments={toggleComments}
+                  isCommentsExpanded={!!expandedComments[discussion.id]}
+                  onAddComment={handleAddComment}
+                  onLike={handleLike}
+                />
               ))}
             </div>
           </TabsContent>
           <TabsContent value="unanswered">
             <div className="space-y-6">
-              {filteredDiscussions.filter(d => d.comments === 0).map((discussion) => (
-                <DiscussionCard key={discussion.id} discussion={discussion} />
+              {filteredDiscussions.filter(d => d.comments.length === 0).map((discussion) => (
+                <DiscussionCard 
+                  key={discussion.id} 
+                  discussion={discussion} 
+                  onToggleComments={toggleComments}
+                  isCommentsExpanded={!!expandedComments[discussion.id]}
+                  onAddComment={handleAddComment}
+                  onLike={handleLike}
+                />
               ))}
             </div>
           </TabsContent>
@@ -197,7 +330,7 @@ const Community = () => {
 };
 
 // Discussion Card Component
-const DiscussionCard = ({ discussion }) => {
+const DiscussionCard = ({ discussion, onToggleComments, isCommentsExpanded, onAddComment, onLike }) => {
   return (
     <Card className="overflow-hidden hover:shadow-md transition-shadow">
       <CardHeader>
@@ -227,21 +360,41 @@ const DiscussionCard = ({ discussion }) => {
           ))}
         </div>
       </CardContent>
-      <CardFooter className="border-t pt-4 flex justify-between">
-        <div className="flex gap-6">
+      <CardFooter className="border-t pt-4 flex flex-col">
+        <div className="w-full flex justify-between">
+          <div className="flex gap-6">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="flex items-center gap-1 text-gray-600"
+              onClick={() => onToggleComments(discussion.id)}
+            >
+              <MessageCircle className="h-4 w-4" />
+              <span>{discussion.comments.length}</span>
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className={`flex items-center gap-1 ${discussion.liked ? 'text-persona-blue' : 'text-gray-600'}`}
+              onClick={() => onLike(discussion.id)}
+            >
+              <ThumbsUp className={`h-4 w-4 ${discussion.liked ? 'fill-persona-blue' : ''}`} />
+              <span>{discussion.likes}</span>
+            </Button>
+          </div>
           <Button variant="ghost" size="sm" className="flex items-center gap-1 text-gray-600">
-            <MessageCircle className="h-4 w-4" />
-            <span>{discussion.comments}</span>
-          </Button>
-          <Button variant="ghost" size="sm" className="flex items-center gap-1 text-gray-600">
-            <ThumbsUp className="h-4 w-4" />
-            <span>{discussion.likes}</span>
+            <Share className="h-4 w-4" />
+            <span>Share</span>
           </Button>
         </div>
-        <Button variant="ghost" size="sm" className="flex items-center gap-1 text-gray-600">
-          <Share className="h-4 w-4" />
-          <span>Share</span>
-        </Button>
+        
+        {isCommentsExpanded && (
+          <CommentSection 
+            discussionId={discussion.id} 
+            comments={discussion.comments} 
+            onAddComment={onAddComment}
+          />
+        )}
       </CardFooter>
     </Card>
   );
