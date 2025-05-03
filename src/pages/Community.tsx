@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
@@ -70,7 +71,7 @@ const CommentSection = ({ discussionId, comments, onAddComment }) => {
 
   return (
     <div className="mt-6 border-t pt-4">
-      <h3 className="font-medium text-lg mb-4 text-center">Comments ({comments.length})</h3>
+      <h3 className="font-medium text-lg mb-4">Comments ({comments.length})</h3>
       
       <div className="space-y-6">
         {comments.map((comment) => (
