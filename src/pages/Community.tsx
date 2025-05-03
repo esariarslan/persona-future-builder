@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessageCircle, ThumbsUp, Share, User, Send, WhatsApp } from 'lucide-react';
+import { MessageCircle, ThumbsUp, Share, User, Send, MessageSquare } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
@@ -443,7 +442,7 @@ const DiscussionCard = ({ discussion, onToggleComments, isCommentsExpanded, onAd
                     variant="outline" 
                     className="w-full justify-start gap-2 bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
                   >
-                    <WhatsApp className="h-4 w-4" />
+                    <MessageSquare className="h-4 w-4" />
                     Share via WhatsApp
                   </Button>
                 </div>
