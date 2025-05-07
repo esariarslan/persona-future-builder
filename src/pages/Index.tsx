@@ -5,7 +5,7 @@ import ObservationForm from '@/components/ObservationForm';
 import RecommendationCard from '@/components/RecommendationCard';
 import { futureSkills, recommendedActivities } from '@/data/futureSkills';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Globe } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AuthLinks from '@/components/AuthLinks';
 
@@ -54,6 +54,51 @@ const Index = () => {
               </div>
               <h3 className="text-xl font-semibold mb-3">Track Development</h3>
               <p className="text-gray-600">Follow your child's progress on their personalized learning path over time.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      {/* Real-Time Activities Feature */}
+      <section className="py-12 px-4 bg-persona-light-purple/20">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row items-center gap-8">
+            <div className="md:w-1/2 order-2 md:order-1">
+              <div className="bg-white p-6 rounded-lg shadow-md border border-persona-purple/20">
+                <div className="flex items-center gap-2 mb-4">
+                  <Globe className="h-5 w-5 text-persona-purple" />
+                  <h3 className="text-xl font-semibold text-persona-purple">Real-Time Activity Discovery</h3>
+                </div>
+                <p className="text-gray-700 mb-4">
+                  Our advanced technology scans the web to find real-time local activities perfectly matched to your child's interests and developmental needs.
+                </p>
+                <ul className="space-y-2 mb-6">
+                  <li className="flex items-start">
+                    <span className="h-5 w-5 text-persona-green flex-shrink-0 mr-2">✓</span>
+                    <span className="text-gray-700">Discover local workshops, classes, and events</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="h-5 w-5 text-persona-green flex-shrink-0 mr-2">✓</span>
+                    <span className="text-gray-700">Personalized to child's age and developmental stage</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="h-5 w-5 text-persona-green flex-shrink-0 mr-2">✓</span>
+                    <span className="text-gray-700">Updated regularly with new opportunities</span>
+                  </li>
+                </ul>
+                <Button className="w-full bg-persona-purple hover:bg-persona-purple/90 text-white">
+                  Learn More
+                </Button>
+              </div>
+            </div>
+            <div className="md:w-1/2 order-1 md:order-2">
+              <h2 className="text-3xl font-bold font-heading mb-4">Always Fresh Activities</h2>
+              <p className="text-lg mb-6">
+                We continuously scan the web for new activities, classes, and resources in your area that match your child's unique profile, ensuring they always have access to fresh learning opportunities.
+              </p>
+              <p className="text-gray-700 mb-6">
+                Our intelligent system combines your observations with real-time activity discovery to create a constantly evolving and personalized learning journey for your child.
+              </p>
             </div>
           </div>
         </div>
