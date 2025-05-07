@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import FileUpload from './FileUpload';
-import { InfoCircle } from 'lucide-react';
+import { Info } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const ObservationForm = () => {
@@ -115,7 +115,7 @@ const ObservationForm = () => {
       </CardHeader>
       <CardContent>
         <Alert className="mb-6 bg-persona-light-blue/30 border-persona-blue/30">
-          <InfoCircle className="h-4 w-4 text-persona-blue" />
+          <Info className="h-4 w-4 text-persona-blue" />
           <AlertDescription className="text-sm text-persona-blue">
             Your child's profile and observations will be analyzed to generate personalized learning paths that include real-time local activities and resources tailored to their specific interests and development needs.
           </AlertDescription>
