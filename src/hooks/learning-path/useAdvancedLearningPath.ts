@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useChildren } from '../useChildren';
 import { useToast } from '../use-toast';
 import { Activity } from './types';
@@ -10,6 +10,30 @@ export const useAdvancedLearningPath = (childId?: string) => {
   const [loading, setLoading] = useState<boolean>(false);
   const { children } = useChildren();
   const { toast } = useToast();
+
+  // Load saved activities from localStorage on initial mount
+  useEffect(() => {
+    if (childId) {
+      const savedActivities = localStorage.getItem(`adv-learning-path-${childId}`);
+      if (savedActivities) {
+        try {
+          const parsedActivities = JSON.parse(savedActivities);
+          if (Array.isArray(parsedActivities) && parsedActivities.length > 0) {
+            setAdvancedActivities(parsedActivities);
+          }
+        } catch (e) {
+          console.error("Error parsing saved advanced activities:", e);
+        }
+      }
+    }
+  }, [childId]);
+
+  // Save activities to localStorage whenever they change
+  useEffect(() => {
+    if (childId && advancedActivities.length > 0) {
+      localStorage.setItem(`adv-learning-path-${childId}`, JSON.stringify(advancedActivities));
+    }
+  }, [advancedActivities, childId]);
 
   // Generate advanced learning path using Gemini with Geneva-specific information
   const generateAdvancedLearningPath = async () => {
@@ -46,6 +70,11 @@ export const useAdvancedLearningPath = (childId?: string) => {
       
       // Set the advanced activities
       setAdvancedActivities(activities);
+      
+      // Save to localStorage
+      if (targetChildId) {
+        localStorage.setItem(`adv-learning-path-${targetChildId}`, JSON.stringify(activities));
+      }
       
       toast({
         title: "Geneva-specific learning path generated",

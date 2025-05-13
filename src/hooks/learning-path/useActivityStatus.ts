@@ -13,9 +13,10 @@ export const useActivityStatus = (
   const [localStorageKey] = useState<string>(`learning-path-${childId}`);
   const [advLocalStorageKey] = useState<string>(`adv-learning-path-${childId}`);
 
-  // Load saved activity status from local storage on initial mount
+  // Load saved activity status from local storage on initial mount or when childId changes
   useEffect(() => {
     if (childId) {
+      console.log(`Loading activities for child: ${childId}`);
       const savedActivities = localStorage.getItem(localStorageKey);
       const savedAdvActivities = localStorage.getItem(advLocalStorageKey);
       
@@ -23,6 +24,7 @@ export const useActivityStatus = (
         try {
           const parsedActivities = JSON.parse(savedActivities);
           if (Array.isArray(parsedActivities) && parsedActivities.length > 0) {
+            console.log(`Found ${parsedActivities.length} saved regular activities for child ${childId}`);
             setActivities(parsedActivities);
           } else if (initialActivities.length > 0) {
             setActivities(initialActivities);
@@ -39,6 +41,7 @@ export const useActivityStatus = (
         try {
           const parsedAdvActivities = JSON.parse(savedAdvActivities);
           if (Array.isArray(parsedAdvActivities) && parsedAdvActivities.length > 0) {
+            console.log(`Found ${parsedAdvActivities.length} saved advanced activities for child ${childId}`);
             setAdvancedActivities(parsedAdvActivities);
           } else if (initialAdvancedActivities.length > 0) {
             setAdvancedActivities(initialAdvancedActivities);
@@ -51,7 +54,7 @@ export const useActivityStatus = (
         setAdvancedActivities(initialAdvancedActivities);
       }
     }
-  }, [childId, localStorageKey, advLocalStorageKey]);
+  }, [childId, localStorageKey, advLocalStorageKey, initialActivities, initialAdvancedActivities]);
 
   // Save activities to local storage whenever they change
   useEffect(() => {
@@ -64,6 +67,7 @@ export const useActivityStatus = (
   useEffect(() => {
     if (childId && advancedActivities.length > 0) {
       localStorage.setItem(advLocalStorageKey, JSON.stringify(advancedActivities));
+      console.log(`Saved ${advancedActivities.length} advanced activities for child ${childId}`);
     }
   }, [advancedActivities, childId, advLocalStorageKey]);
 

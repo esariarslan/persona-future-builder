@@ -8,10 +8,13 @@ import type { Activity } from './learning-path/types';
 export type { Activity } from './learning-path/types';
 
 export const useLearningPath = (childId?: string) => {
+  const safeChildId = childId || 'default';
+  
+  // Use child-specific hooks
   const basicPath = useLearningPathBasic(childId);
   const advancedPath = useAdvancedLearningPath(childId);
   const activityStatus = useActivityStatus(
-    childId || 'default',
+    safeChildId,
     basicPath.activities, 
     advancedPath.advancedActivities
   );
@@ -28,11 +31,12 @@ export const useLearningPath = (childId?: string) => {
       });
       activityStatus.setActivities(mergedActivities);
     }
-  }, [basicPath.activities]);
+  }, [basicPath.activities, childId]);
   
   // Sync activities from advanced path to activity status
   useEffect(() => {
     if (advancedPath.advancedActivities.length > 0) {
+      console.log(`Syncing ${advancedPath.advancedActivities.length} advanced activities for child ${childId}`);
       // Merge existing completion status with new activities
       const mergedActivities = advancedPath.advancedActivities.map(newActivity => {
         const existingActivity = activityStatus.advancedActivities.find(a => a.id === newActivity.id);
@@ -42,7 +46,7 @@ export const useLearningPath = (childId?: string) => {
       });
       activityStatus.setAdvancedActivities(mergedActivities);
     }
-  }, [advancedPath.advancedActivities]);
+  }, [advancedPath.advancedActivities, childId]);
   
   return {
     // Basic path properties
