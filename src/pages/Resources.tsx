@@ -6,7 +6,7 @@ import { recommendedActivities } from '@/data/futureSkills';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, ExternalLink } from 'lucide-react';
 
 const Resources = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -77,6 +77,23 @@ const Resources = () => {
                 {type}
               </Badge>
             ))}
+          </div>
+        </div>
+        
+        {/* Demand Activities Section */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold font-heading text-persona-blue mb-3">Demand Activities</h2>
+            <p className="text-gray-600 mb-6">
+              Access our broader community who is ready to offer new organizations!
+            </p>
+            <Button 
+              className="bg-persona-green hover:bg-persona-green/90 text-white"
+              onClick={() => window.open('https://www.skool.com/persona-future-builders-club-8988', '_blank')}
+            >
+              <span>Demand Activities</span>
+              <ExternalLink className="ml-2 h-4 w-4" />
+            </Button>
           </div>
         </div>
         
