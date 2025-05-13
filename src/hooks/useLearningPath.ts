@@ -135,7 +135,7 @@ export const useLearningPath = (childId?: string) => {
       const childProfile = children.find(child => child.id === targetChildId);
       
       // Call the Supabase Edge Function to generate learning path with Gemini
-      // Instead of accessing protected properties, use the URL and key directly
+      // Use direct URL and key references instead of accessing protected properties
       const supabaseUrl = "https://ukyuiphvvolxhdkaptrz.supabase.co";
       const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVreXVpcGh2dm9seGhka2FwdHJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYyNzUxOTgsImV4cCI6MjA2MTg1MTE5OH0.BTE3Nc2jqaUbKqChWtvy-fqW0aQsK3AftR5H4y4iBzY";
       

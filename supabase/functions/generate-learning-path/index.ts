@@ -38,7 +38,7 @@ serve(async (req) => {
     // Add observations if available
     if (observations && observations.length > 0) {
       promptContent += `\n\nParent/Teacher Observations:`;
-      observations.forEach((obs: any) => {
+      observations.forEach((obs) => {
         promptContent += `\n- ${obs.content}`;
       });
     }
@@ -77,35 +77,48 @@ serve(async (req) => {
 
     console.log("Sending prompt to Gemini:", promptContent);
     
-    // Call Gemini API
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${geminiApiKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: promptContent
-              }
-            ]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 2048
-        }
-      })
-    });
-
-    const geminiResponse = await response.json();
-    console.log("Received response from Gemini:", JSON.stringify(geminiResponse));
-    
-    // Extract the generated text from Gemini response
-    let activities = [];
     try {
+      // Call Gemini API
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${geminiApiKey}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                {
+                  text: promptContent
+                }
+              ]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 2048
+          }
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Gemini API error:", errorText);
+        return new Response(
+          JSON.stringify({ 
+            error: `Gemini API error: ${response.status}`, 
+            details: errorText 
+          }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const geminiResponse = await response.json();
+      console.log("Received response from Gemini:", JSON.stringify(geminiResponse));
+      
+      // Extract the generated text from Gemini response
+      let activities = [];
+      
       // Check if the response has the expected structure
       if (geminiResponse.candidates && 
           geminiResponse.candidates[0] && 
@@ -116,28 +129,43 @@ serve(async (req) => {
         const generatedText = geminiResponse.candidates[0].content.parts[0].text;
         console.log("Generated text:", generatedText);
         
-        // Extract JSON from the response text
-        // The response might include markdown formatting, so we need to extract just the JSON part
-        const jsonMatch = generatedText.match(/\[\s*\{.*\}\s*\]/s);
-        if (jsonMatch) {
-          activities = JSON.parse(jsonMatch[0]);
-          console.log("Parsed activities:", JSON.stringify(activities));
-        } else {
-          // If we can't find a JSON array, try to parse the entire text as JSON
-          try {
+        // Try multiple parsing approaches
+        try {
+          // First approach: Extract JSON array from the response using regex
+          const jsonMatch = generatedText.match(/\[\s*\{.*\}\s*\]/s);
+          if (jsonMatch) {
+            activities = JSON.parse(jsonMatch[0]);
+            console.log("Parsed activities from JSON match:", JSON.stringify(activities));
+          }
+          // Second approach: Try to parse the entire text as JSON
+          else if (generatedText.trim().startsWith('[') && generatedText.trim().endsWith(']')) {
             activities = JSON.parse(generatedText);
             console.log("Parsed activities from full text:", JSON.stringify(activities));
-          } catch (e) {
-            console.error("Failed to parse activities from Gemini response");
-            // Return a descriptive error about the parsing issue
-            return new Response(
-              JSON.stringify({ 
-                error: "Failed to parse activities from AI response", 
-                rawResponse: generatedText 
-              }),
-              { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
           }
+          // Third approach: Look for JSON within markdown code blocks
+          else {
+            const codeBlockMatch = generatedText.match(/```(?:json)?\s*([\s\S]*?)```/);
+            if (codeBlockMatch && codeBlockMatch[1]) {
+              const jsonContent = codeBlockMatch[1].trim();
+              activities = JSON.parse(jsonContent);
+              console.log("Parsed activities from code block:", JSON.stringify(activities));
+            }
+          }
+          
+          // If no activities were parsed, throw an error
+          if (!activities || activities.length === 0) {
+            throw new Error("Could not extract valid activities from Gemini response");
+          }
+        } catch (parseError) {
+          console.error("Failed to parse activities:", parseError, "Raw text:", generatedText);
+          return new Response(
+            JSON.stringify({ 
+              error: "Failed to parse activities from AI response", 
+              details: parseError.message,
+              rawText: generatedText
+            }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         }
       } else {
         console.error("Unexpected Gemini response structure:", JSON.stringify(geminiResponse));
@@ -149,33 +177,32 @@ serve(async (req) => {
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-    } catch (error) {
-      console.error("Error extracting activities from Gemini response:", error);
-      return new Response(
-        JSON.stringify({ 
-          error: "Error processing AI response", 
-          details: error.message,
-          rawResponse: geminiResponse
-        }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
 
-    // If we have valid activities, return them
-    if (Array.isArray(activities) && activities.length > 0) {
+      // If we have valid activities, return them
+      if (Array.isArray(activities) && activities.length > 0) {
+        return new Response(
+          JSON.stringify({ 
+            activities: activities,
+            message: "Successfully generated learning path"
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } else {
+        // If we couldn't get valid activities, return an error
+        return new Response(
+          JSON.stringify({ 
+            error: "Failed to generate valid activities", 
+            details: "The model did not return properly formatted activities"
+          }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    } catch (apiError) {
+      console.error("Error calling Gemini API:", apiError);
       return new Response(
         JSON.stringify({ 
-          activities: activities,
-          message: "Successfully generated learning path"
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    } else {
-      // If we couldn't get valid activities, return an error
-      return new Response(
-        JSON.stringify({ 
-          error: "Failed to generate valid activities", 
-          rawResponse: geminiResponse
+          error: "Error calling Gemini API", 
+          details: apiError.message 
         }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
