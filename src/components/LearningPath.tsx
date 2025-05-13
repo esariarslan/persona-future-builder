@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -78,7 +77,7 @@ const LearningPath: React.FC<LearningPathProps> = ({ activities: initialActiviti
   
   // Calculate overall progress
   const completedActivities = activities.filter(activity => activity.completed).length;
-  const progressPercentage = Math.round((completedActivities / activities.length) * 100);
+  const progressPercentage = activities.length > 0 ? Math.round((completedActivities / activities.length) * 100) : 0;
 
   const handleOpenDialog = (activity: Activity) => {
     setCurrentActivity(activity);
@@ -324,7 +323,7 @@ const LearningPath: React.FC<LearningPathProps> = ({ activities: initialActiviti
       </Card>
 
       {/* Display Advanced Learning Path if available */}
-      {showAdvancedPath && advancedActivities.length > 0 && (
+      {showAdvancedPath && (
         <AdvancedLearningPath 
           activities={advancedActivities} 
           childId={childId || ''}

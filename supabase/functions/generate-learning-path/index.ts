@@ -74,6 +74,8 @@ serve(async (req) => {
         "source": "Website or source name"
       }
     ]`;
+
+    console.log("Sending prompt to Gemini:", promptContent);
     
     // Call Gemini API
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${geminiApiKey}`, {
@@ -99,6 +101,7 @@ serve(async (req) => {
     });
 
     const geminiResponse = await response.json();
+    console.log("Received response from Gemini:", JSON.stringify(geminiResponse));
     
     // Extract the generated text from Gemini response
     let activities = [];
@@ -111,16 +114,19 @@ serve(async (req) => {
           geminiResponse.candidates[0].content.parts[0]) {
         
         const generatedText = geminiResponse.candidates[0].content.parts[0].text;
+        console.log("Generated text:", generatedText);
         
         // Extract JSON from the response text
         // The response might include markdown formatting, so we need to extract just the JSON part
         const jsonMatch = generatedText.match(/\[\s*\{.*\}\s*\]/s);
         if (jsonMatch) {
           activities = JSON.parse(jsonMatch[0]);
+          console.log("Parsed activities:", JSON.stringify(activities));
         } else {
           // If we can't find a JSON array, try to parse the entire text as JSON
           try {
             activities = JSON.parse(generatedText);
+            console.log("Parsed activities from full text:", JSON.stringify(activities));
           } catch (e) {
             console.error("Failed to parse activities from Gemini response");
             // Return a descriptive error about the parsing issue
@@ -133,6 +139,15 @@ serve(async (req) => {
             );
           }
         }
+      } else {
+        console.error("Unexpected Gemini response structure:", JSON.stringify(geminiResponse));
+        return new Response(
+          JSON.stringify({ 
+            error: "Unexpected response structure from Gemini API", 
+            details: JSON.stringify(geminiResponse) 
+          }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
     } catch (error) {
       console.error("Error extracting activities from Gemini response:", error);
