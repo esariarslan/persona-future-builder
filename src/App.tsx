@@ -12,6 +12,9 @@ import DashboardPage from "./pages/Dashboard";
 import Resources from "./pages/Resources";
 import Community from "./pages/Community";
 import NotFound from "./pages/NotFound";
+import HowItWorks from "./pages/HowItWorks";
+import FutureSkills from "./pages/FutureSkills";
+import LearningPaths from "./pages/LearningPaths";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +35,9 @@ const App = () => (
             } />
             <Route path="/resources" element={<Resources />} />
             <Route path="/community" element={<Community />} />
+            <Route path="/how-it-works" element={<HowItWorks />} />
+            <Route path="/future-skills" element={<FutureSkills />} />
+            <Route path="/learning-paths" element={<LearningPaths />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

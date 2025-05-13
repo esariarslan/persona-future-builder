@@ -55,6 +55,13 @@ const Index = () => {
               <p className="text-gray-600">Follow your child's progress on their personalized learning path over time.</p>
             </div>
           </div>
+          <div className="mt-10 text-center">
+            <Link to="/how-it-works">
+              <Button variant="outline" className="border-persona-blue text-persona-blue hover:bg-persona-blue/10">
+                Learn More About How It Works <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
       
@@ -131,6 +138,13 @@ const Index = () => {
               </div>
             ))}
           </div>
+          <div className="mt-10 text-center">
+            <Link to="/future-skills">
+              <Button variant="outline" className="border-persona-blue text-persona-blue hover:bg-persona-blue/10">
+                Learn More About Future Skills <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
       
@@ -146,9 +160,9 @@ const Index = () => {
               <div>
                 <h3 className="font-semibold text-lg mb-3">Platform</h3>
                 <ul className="space-y-2 text-gray-400">
-                  <li><a href="#" className="hover:text-white">How It Works</a></li>
-                  <li><a href="#" className="hover:text-white">Future Skills</a></li>
-                  <li><a href="#" className="hover:text-white">Learning Paths</a></li>
+                  <li><Link to="/how-it-works" className="hover:text-white">How It Works</Link></li>
+                  <li><Link to="/future-skills" className="hover:text-white">Future Skills</Link></li>
+                  <li><Link to="/learning-paths" className="hover:text-white">Learning Paths</Link></li>
                 </ul>
               </div>
               <div>
