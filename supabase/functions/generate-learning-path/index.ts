@@ -42,6 +42,15 @@ serve(async (req) => {
       );
     }
     
+    // Get current date for ensuring up-to-date activities
+    const currentDate = new Date();
+    const currentDateString = currentDate.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+    
+    // Calculate date range for activities (next 30 days)
+    const nextMonthDate = new Date(currentDate);
+    nextMonthDate.setDate(currentDate.getDate() + 30);
+    const nextMonthDateString = nextMonthDate.toISOString().split('T')[0];
+    
     // Base prompt for generating learning paths
     let promptContent = `Generate a personalized learning path for a child with the following information:`;
     
@@ -69,13 +78,15 @@ serve(async (req) => {
       promptContent += `\n\nAdditional Information from Documents: ${documentContent}`;
     }
     
-    // Updated instructions for Gemini to generate Geneva-specific activities with more specific content sources
+    // Updated instructions for Gemini to generate Geneva-specific activities with more specific content sources and date requirements
     promptContent += `\n\nBased on this information, create a tailored learning path with 4 up-to-date activities that:
     1. Are specifically located in Geneva, Switzerland
     2. Include REAL, CURRENT local resources from Geneva that would be appropriate for children
     3. Match the child's interests and developmental needs
-    4. Reference ACTUAL events, workshops, or classes that are happening NOW in Geneva
-    5. Include activities from these specific Geneva sources (use at least two of these):
+    4. CRITICAL: All activities MUST be happening in the FUTURE - only between ${currentDateString} and ${nextMonthDateString}
+    5. CRITICAL: DO NOT include any past events or activities that have already occurred
+    6. Reference ACTUAL current events, workshops, or classes happening NOW in Geneva
+    7. Include activities from these specific Geneva sources (use at least three of these):
        - Parentville.ch (https://www.parentville.ch/)
        - Ville de Genève (https://www.geneve.ch/fr/agenda-manifestations)
        - Geneva Welcome Center (https://www.cagi.ch/en/practical-living-guide/children-family)
@@ -83,12 +94,14 @@ serve(async (req) => {
        - Natural History Museum of Geneva (https://www.museum-geneve.ch/)
        - La Maison de la Créativité (https://maisondelacreativite.ch/)
        - Genève Famille (https://www.genevefamille.ch/)
-    6. Provide specific details for each activity including:
-       - Activity title
+       - L'Agenda des Sorties (https://www.sorties-en-famille.ch/)
+       - Meyrin Cultural Center (https://meyrinculture.ch/)
+    8. Provide specific details for each activity including:
+       - Activity title (realistic title that matches actual Geneva events)
        - Activity type (Workshop, Event, Course, etc.)
        - Description (30-50 words)
        - Location (actual venue name and address in Geneva)
-       - Date (use real upcoming dates within the next 4 weeks)
+       - Date (use ONLY real upcoming dates between ${currentDateString} and ${nextMonthDateString})
        - Skill area being developed
        - Source (the specific website where this activity was found)
     
@@ -105,6 +118,7 @@ serve(async (req) => {
       }
     ]
     
+    CRITICAL: All dates MUST be between ${currentDateString} and ${nextMonthDateString}. Double-check each date to ensure it is after today's date of ${currentDateString}.
     Return ONLY the JSON array with no additional text or explanation.`;
 
     console.log("Sending prompt to Gemini with model gemini-1.5-flash");
@@ -164,13 +178,14 @@ serve(async (req) => {
       const geminiResponse = await response.json();
       console.log("Received response from Gemini");
       
-      // Generate fallback activities in case parsing fails
+      // Generate fallback activities in case parsing fails - with future dates
+      const today = new Date();
       const fallbackActivities = [
         {
           title: "Little Scientists Workshop at Geneva Natural History Museum",
           type: "Workshop",
           description: "Hands-on experiments and dinosaur fossil exploration designed for children aged 6-12 to learn about paleontology.",
-          date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          date: new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           location: "Museum of Natural History, 1 Route de Malagnou, 1208 Geneva",
           skillArea: "Scientific Inquiry",
           source: "Museum of Natural History Geneva - www.museum-geneve.ch"
@@ -179,7 +194,7 @@ serve(async (req) => {
           title: "Creative Expression at Maison de la Créativité",
           type: "Workshop",
           description: "Children explore various artistic mediums in this drop-in creative workshop focused on self-expression through art.",
-          date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          date: new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           location: "Maison de la Créativité, 7 Chemin Calandrini, 1231 Conches",
           skillArea: "Artistic Expression",
           source: "La Maison de la Créativité - maisondelacreativite.ch"
@@ -188,7 +203,7 @@ serve(async (req) => {
           title: "Cultural Discovery at MEG Museum",
           type: "Event",
           description: "Interactive cultural exhibition specifically designed for families with children to explore world cultures together.",
-          date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          date: new Date(today.getTime() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           location: "MEG, 65-67 Boulevard Carl-Vogt, 1205 Geneva",
           skillArea: "Cultural Awareness",
           source: "MEG Museum - www.meg.ch/fr"
@@ -197,7 +212,7 @@ serve(async (req) => {
           title: "Family Nature Walk in Botanical Gardens",
           type: "Outdoor Activity",
           description: "Guided exploration of Geneva's botanical gardens with activities designed to help children recognize local plants and wildlife.",
-          date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          date: new Date(today.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           location: "Conservatory and Botanical Garden, 1 Chemin de l'Impératrice, 1292 Chambésy",
           skillArea: "Environmental Awareness",
           source: "Ville de Genève - www.geneve.ch/fr/agenda-manifestations"
@@ -254,20 +269,39 @@ serve(async (req) => {
         activities = fallbackActivities;
       }
 
-      // Ensure we have valid activities with all required fields
+      // Ensure all dates are in the future
+      const now = new Date();
+      now.setHours(0, 0, 0, 0); // Set to beginning of today
+      
       activities = activities.map((activity, index) => {
-        // Generate a valid date if missing or invalid
-        let date = activity.date;
-        if (!date || !date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-          date = new Date(Date.now() + (7 + index * 3) * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        // Parse the date or use a fallback
+        let activityDate;
+        try {
+          if (activity.date && activity.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            activityDate = new Date(activity.date);
+            
+            // Check if the date is in the past
+            if (activityDate < now) {
+              console.log(`Activity date ${activity.date} is in the past, replacing with future date`);
+              activityDate = new Date(now.getTime() + (3 + index * 3) * 24 * 60 * 60 * 1000);
+            }
+          } else {
+            activityDate = new Date(now.getTime() + (3 + index * 3) * 24 * 60 * 60 * 1000);
+          }
+        } catch (error) {
+          // If date parsing fails, use a fallback date
+          activityDate = new Date(now.getTime() + (3 + index * 3) * 24 * 60 * 60 * 1000);
         }
+        
+        // Format the date as YYYY-MM-DD
+        const formattedDate = activityDate.toISOString().split('T')[0];
         
         return {
           id: Date.now() + index,
           title: activity.title || `Activity ${index + 1}`,
           type: activity.type || "Workshop",
           description: activity.description || "A fun and educational activity for children in Geneva.",
-          date: date,
+          date: formattedDate,
           completed: false,
           skillArea: activity.skillArea || "General Development",
           location: activity.location || "Geneva, Switzerland",
@@ -286,14 +320,15 @@ serve(async (req) => {
     } catch (apiError) {
       console.error("Error calling Gemini API:", apiError);
       
-      // Return fallback activities instead of error
+      // Generate fallback activities with future dates
+      const today = new Date();
       const fallbackActivities = [
         {
           id: Date.now(),
           title: "Little Scientists Workshop at Geneva Natural History Museum",
           type: "Workshop",
           description: "Hands-on experiments and dinosaur fossil exploration designed for children aged 6-12 to learn about paleontology.",
-          date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          date: new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           completed: false,
           skillArea: "Scientific Inquiry",
           location: "Museum of Natural History, 1 Route de Malagnou, 1208 Geneva",
@@ -304,7 +339,7 @@ serve(async (req) => {
           title: "Creative Expression at Maison de la Créativité",
           type: "Workshop",
           description: "Children explore various artistic mediums in this drop-in creative workshop focused on self-expression through art.",
-          date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          date: new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           completed: false,
           skillArea: "Artistic Expression",
           location: "Maison de la Créativité, 7 Chemin Calandrini, 1231 Conches",
@@ -315,7 +350,7 @@ serve(async (req) => {
           title: "Cultural Discovery at MEG Museum",
           type: "Event",
           description: "Interactive cultural exhibition specifically designed for families with children to explore world cultures together.",
-          date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          date: new Date(today.getTime() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           completed: false,
           skillArea: "Cultural Awareness",
           location: "MEG, 65-67 Boulevard Carl-Vogt, 1205 Geneva",
@@ -326,7 +361,7 @@ serve(async (req) => {
           title: "Family Nature Walk in Botanical Gardens",
           type: "Outdoor Activity",
           description: "Guided exploration of Geneva's botanical gardens with activities designed to help children recognize local plants and wildlife.",
-          date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          date: new Date(today.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           completed: false,
           skillArea: "Environmental Awareness",
           location: "Conservatory and Botanical Garden, 1 Chemin de l'Impératrice, 1292 Chambésy",

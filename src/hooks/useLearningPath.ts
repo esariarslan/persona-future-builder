@@ -32,7 +32,7 @@ export const useLearningPath = (childId?: string) => {
     loading: basicPath.loading,
     generateLearningPath: basicPath.generateLearningPath,
     
-    // Advanced path properties
+    // Advanced path properties (renamed for Geneva focus)
     advancedActivities: activityStatus.advancedActivities,
     advancedLoading: advancedPath.loading,
     generateAdvancedLearningPath: advancedPath.generateAdvancedLearningPath,

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, Calendar, Pencil, BookOpen, Award, Sparkles } from "lucide-react";
+import { Check, Calendar, Pencil, BookOpen, Award, Sparkles, Clock } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -70,6 +70,18 @@ const AdvancedLearningPath: React.FC<AdvancedLearningPathProps> = ({ activities,
         return <Calendar className="h-4 w-4 mr-1" />;
     }
   };
+  
+  // Function to check if an activity is upcoming soon (within next 7 days)
+  const isUpcomingSoon = (dateString: string): boolean => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const activityDate = new Date(dateString);
+    const timeDiff = activityDate.getTime() - today.getTime();
+    const dayDiff = timeDiff / (1000 * 3600 * 24);
+    
+    return dayDiff >= 0 && dayDiff <= 7;
+  };
 
   return (
     <>
@@ -78,7 +90,10 @@ const AdvancedLearningPath: React.FC<AdvancedLearningPathProps> = ({ activities,
           <div className="flex justify-between items-center">
             <CardTitle className="text-2xl text-persona-purple flex items-center">
               <Sparkles className="h-5 w-5 mr-2 text-persona-purple" />
-              Advanced Learning Path
+              Geneva Learning Path
+              <Badge variant="outline" className="bg-persona-light-purple/20 border-persona-purple text-persona-purple text-xs ml-2">
+                Up-to-date
+              </Badge>
             </CardTitle>
             <Badge variant="outline" className="bg-persona-light-purple text-persona-purple">
               {progressPercentage}% Complete
@@ -108,20 +123,29 @@ const AdvancedLearningPath: React.FC<AdvancedLearningPathProps> = ({ activities,
                         <span>{activity.type}</span>
                         <span className="mx-2">•</span>
                         <Calendar className="h-3 w-3 mr-1" />
-                        <span>{activity.date}</span>
+                        <span className="flex items-center">
+                          {activity.date}
+                          {isUpcomingSoon(activity.date) && (
+                            <Badge className="ml-2 bg-persona-orange text-white text-xs">
+                              <Clock className="h-3 w-3 mr-1" />
+                              Soon
+                            </Badge>
+                          )}
+                        </span>
                         {activity.location && (
                           <>
                             <span className="mx-2">•</span>
                             <span>{activity.location}</span>
                           </>
                         )}
-                        {activity.source && (
-                          <>
-                            <span className="mx-2">•</span>
-                            <span className="text-persona-purple text-xs">Source: {activity.source}</span>
-                          </>
-                        )}
                       </div>
+                      {activity.source && (
+                        <div className="mt-1">
+                          <span className="text-persona-purple text-xs bg-persona-light-purple/20 px-2 py-1 rounded-full">
+                            Source: {activity.source}
+                          </span>
+                        </div>
+                      )}
                       <p className="text-gray-600 mt-2">{activity.description}</p>
                       
                       {activity.completed ? (
@@ -152,7 +176,7 @@ const AdvancedLearningPath: React.FC<AdvancedLearningPathProps> = ({ activities,
               ))
             ) : (
               <div className="py-12 text-center">
-                <p className="text-gray-500">No advanced activities generated yet. Click the "Advanced Learning Path" button to generate personalized activities.</p>
+                <p className="text-gray-500">No activities generated yet. Click the "Geneva Learning Path" button to generate personalized activities.</p>
               </div>
             )}
           </div>
