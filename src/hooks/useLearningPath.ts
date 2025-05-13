@@ -135,7 +135,7 @@ export const useLearningPath = (childId?: string) => {
       const childProfile = children.find(child => child.id === targetChildId);
       
       // Call the Supabase Edge Function to generate learning path with Gemini
-      // Use direct URL and key references instead of accessing protected properties
+      // Use direct URL and key references
       const supabaseUrl = "https://ukyuiphvvolxhdkaptrz.supabase.co";
       const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVreXVpcGh2dm9seGhka2FwdHJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYyNzUxOTgsImV4cCI6MjA2MTg1MTE5OH0.BTE3Nc2jqaUbKqChWtvy-fqW0aQsK3AftR5H4y4iBzY";
       
@@ -149,35 +149,22 @@ export const useLearningPath = (childId?: string) => {
           childId: targetChildId,
           observations: childObservations || [],
           interests: childProfile?.interests || [],
-          documentContent: null  // We can add document content processing later
+          documentContent: null
         })
       });
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to generate advanced learning path');
-      }
-      
       const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
       
       if (!data.activities || !Array.isArray(data.activities)) {
         throw new Error('Invalid response from AI service');
       }
       
-      // Transform the Gemini activities to match our Activity interface
-      const newActivities: Activity[] = data.activities.map((activity: any, index: number) => ({
-        id: Date.now() + index,
-        title: activity.title,
-        type: activity.type,
-        description: activity.description,
-        date: activity.date,
-        completed: false,
-        skillArea: activity.skillArea,
-        location: activity.location,
-        source: activity.source || "Parentville Geneva"
-      }));
-      
-      setAdvancedActivities(newActivities);
+      // Set the advanced activities
+      setAdvancedActivities(data.activities);
       
       toast({
         title: "Advanced learning path generated",
