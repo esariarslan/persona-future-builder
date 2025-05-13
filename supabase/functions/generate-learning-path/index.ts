@@ -2,8 +2,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
-// Access the Gemini API key
+// Access the Gemini API key directly from Deno.env
 const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
+
+// Log the API key status (not the actual key) for debugging
+console.log(`Gemini API key status: ${geminiApiKey ? 'configured' : 'not configured'}`);
 
 // CORS headers for the response
 const corsHeaders = {
@@ -28,6 +31,7 @@ serve(async (req) => {
     }
     
     if (!geminiApiKey) {
+      console.error("Gemini API key is not configured in environment variables");
       return new Response(
         JSON.stringify({ error: "Gemini API key is not configured" }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -90,7 +94,7 @@ serve(async (req) => {
     
     Return ONLY the JSON array with no additional text or explanation.`;
 
-    console.log("Sending prompt to Gemini with model gemini-1.5-pro");
+    console.log("Sending prompt to Gemini with model gemini-1.5-flash");
     
     try {
       // Call Gemini API with improved error handling
