@@ -55,7 +55,7 @@ const AdvancedLearningPath: React.FC<AdvancedLearningPathProps> = ({ activities,
       setIsDialogOpen(false);
       setIsSubmitting(false);
       toast.success("Activity completed successfully!", {
-        description: "Your progress has been updated."
+        description: `Your progress for ${childId ? 'this child' : 'your child'} has been updated.`
       });
     }, 500);
   };
