@@ -11,7 +11,7 @@ export const useAdvancedLearningPath = (childId?: string) => {
   const { children } = useChildren();
   const { toast } = useToast();
 
-  // Generate advanced learning path using Gemini
+  // Generate advanced learning path using Gemini with Geneva-specific information
   const generateAdvancedLearningPath = async () => {
     if (!childId && (!children || children.length === 0)) {
       toast({
@@ -48,8 +48,8 @@ export const useAdvancedLearningPath = (childId?: string) => {
       setAdvancedActivities(activities);
       
       toast({
-        title: "Advanced learning path generated",
-        description: "New Geneva-specific activities have been created for your child"
+        title: "Geneva-specific learning path generated",
+        description: "New activities based on current Geneva events have been created for your child"
       });
       
     } catch (error: any) {

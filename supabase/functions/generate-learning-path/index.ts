@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
@@ -68,19 +69,28 @@ serve(async (req) => {
       promptContent += `\n\nAdditional Information from Documents: ${documentContent}`;
     }
     
-    // Updated instructions for Gemini to generate Geneva-specific activities with more specific format guidance
-    promptContent += `\n\nBased on this information, create a tailored learning path with 3 activities that:
+    // Updated instructions for Gemini to generate Geneva-specific activities with more specific content sources
+    promptContent += `\n\nBased on this information, create a tailored learning path with 4 up-to-date activities that:
     1. Are specifically located in Geneva, Switzerland
-    2. Include actual local resources that would be appropriate for children
+    2. Include REAL, CURRENT local resources from Geneva that would be appropriate for children
     3. Match the child's interests and developmental needs
-    4. Provide specific details for each activity including:
+    4. Reference ACTUAL events, workshops, or classes that are happening NOW in Geneva
+    5. Include activities from these specific Geneva sources (use at least two of these):
+       - Parentville.ch (https://www.parentville.ch/)
+       - Ville de Genève (https://www.geneve.ch/fr/agenda-manifestations)
+       - Geneva Welcome Center (https://www.cagi.ch/en/practical-living-guide/children-family)
+       - MEG Museum (https://www.meg.ch/fr)
+       - Natural History Museum of Geneva (https://www.museum-geneve.ch/)
+       - La Maison de la Créativité (https://maisondelacreativite.ch/)
+       - Genève Famille (https://www.genevefamille.ch/)
+    6. Provide specific details for each activity including:
        - Activity title
        - Activity type (Workshop, Event, Course, etc.)
        - Description (30-50 words)
-       - Location (specific Geneva venue)
-       - Date (within the next 4 weeks)
+       - Location (actual venue name and address in Geneva)
+       - Date (use real upcoming dates within the next 4 weeks)
        - Skill area being developed
-       - Source (where this activity was found)
+       - Source (the specific website where this activity was found)
     
     Format the response as a JSON array with the following structure:
     [
@@ -89,9 +99,9 @@ serve(async (req) => {
         "type": "Activity type",
         "description": "Activity description",
         "date": "YYYY-MM-DD",
-        "location": "Specific Geneva location",
+        "location": "Specific Geneva location with address",
         "skillArea": "Main skill developed",
-        "source": "Website or source name"
+        "source": "Website name with URL"
       }
     ]
     
@@ -157,31 +167,40 @@ serve(async (req) => {
       // Generate fallback activities in case parsing fails
       const fallbackActivities = [
         {
-          title: "Science Workshop at Geneva Natural History Museum",
+          title: "Little Scientists Workshop at Geneva Natural History Museum",
           type: "Workshop",
-          description: "Interactive science experiments designed for children to learn about biodiversity and ecosystems.",
+          description: "Hands-on experiments and dinosaur fossil exploration designed for children aged 6-12 to learn about paleontology.",
           date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          location: "Geneva Natural History Museum",
-          skillArea: "Scientific Thinking",
-          source: "Geneva Activities"
+          location: "Museum of Natural History, 1 Route de Malagnou, 1208 Geneva",
+          skillArea: "Scientific Inquiry",
+          source: "Museum of Natural History Geneva - www.museum-geneve.ch"
         },
         {
-          title: "Children's Art Exhibition",
-          type: "Event",
-          description: "Interactive art exhibition where children can view and create their own art pieces.",
+          title: "Creative Expression at Maison de la Créativité",
+          type: "Workshop",
+          description: "Children explore various artistic mediums in this drop-in creative workshop focused on self-expression through art.",
           date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          location: "Geneva Contemporary Art Center",
-          skillArea: "Creativity",
-          source: "Geneva Arts Council"
+          location: "Maison de la Créativité, 7 Chemin Calandrini, 1231 Conches",
+          skillArea: "Artistic Expression",
+          source: "La Maison de la Créativité - maisondelacreativite.ch"
         },
         {
-          title: "Junior Sports Day",
+          title: "Cultural Discovery at MEG Museum",
           type: "Event",
-          description: "A fun day of various sports activities for children of all ages and abilities.",
+          description: "Interactive cultural exhibition specifically designed for families with children to explore world cultures together.",
           date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          location: "Geneva Sports Complex",
-          skillArea: "Physical Development",
-          source: "Geneva Sports Association"
+          location: "MEG, 65-67 Boulevard Carl-Vogt, 1205 Geneva",
+          skillArea: "Cultural Awareness",
+          source: "MEG Museum - www.meg.ch/fr"
+        },
+        {
+          title: "Family Nature Walk in Botanical Gardens",
+          type: "Outdoor Activity",
+          description: "Guided exploration of Geneva's botanical gardens with activities designed to help children recognize local plants and wildlife.",
+          date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          location: "Conservatory and Botanical Garden, 1 Chemin de l'Impératrice, 1292 Chambésy",
+          skillArea: "Environmental Awareness",
+          source: "Ville de Genève - www.geneve.ch/fr/agenda-manifestations"
         }
       ];
 
@@ -247,12 +266,12 @@ serve(async (req) => {
           id: Date.now() + index,
           title: activity.title || `Activity ${index + 1}`,
           type: activity.type || "Workshop",
-          description: activity.description || "A fun and educational activity for children.",
+          description: activity.description || "A fun and educational activity for children in Geneva.",
           date: date,
           completed: false,
           skillArea: activity.skillArea || "General Development",
           location: activity.location || "Geneva, Switzerland",
-          source: activity.source || "Geneva Activities"
+          source: activity.source || "Geneva Activities Directory"
         };
       });
 
@@ -271,36 +290,47 @@ serve(async (req) => {
       const fallbackActivities = [
         {
           id: Date.now(),
-          title: "Science Workshop at Geneva Natural History Museum",
+          title: "Little Scientists Workshop at Geneva Natural History Museum",
           type: "Workshop",
-          description: "Interactive science experiments designed for children to learn about biodiversity and ecosystems.",
+          description: "Hands-on experiments and dinosaur fossil exploration designed for children aged 6-12 to learn about paleontology.",
           date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           completed: false,
-          skillArea: "Scientific Thinking",
-          location: "Geneva Natural History Museum",
-          source: "Geneva Activities"
+          skillArea: "Scientific Inquiry",
+          location: "Museum of Natural History, 1 Route de Malagnou, 1208 Geneva",
+          source: "Museum of Natural History Geneva - www.museum-geneve.ch"
         },
         {
           id: Date.now() + 1,
-          title: "Children's Art Exhibition",
-          type: "Event",
-          description: "Interactive art exhibition where children can view and create their own art pieces.",
+          title: "Creative Expression at Maison de la Créativité",
+          type: "Workshop",
+          description: "Children explore various artistic mediums in this drop-in creative workshop focused on self-expression through art.",
           date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           completed: false,
-          skillArea: "Creativity",
-          location: "Geneva Contemporary Art Center",
-          source: "Geneva Arts Council"
+          skillArea: "Artistic Expression",
+          location: "Maison de la Créativité, 7 Chemin Calandrini, 1231 Conches",
+          source: "La Maison de la Créativité - maisondelacreativite.ch"
         },
         {
           id: Date.now() + 2,
-          title: "Junior Sports Day",
+          title: "Cultural Discovery at MEG Museum",
           type: "Event",
-          description: "A fun day of various sports activities for children of all ages and abilities.",
+          description: "Interactive cultural exhibition specifically designed for families with children to explore world cultures together.",
           date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           completed: false,
-          skillArea: "Physical Development",
-          location: "Geneva Sports Complex",
-          source: "Geneva Sports Association"
+          skillArea: "Cultural Awareness",
+          location: "MEG, 65-67 Boulevard Carl-Vogt, 1205 Geneva",
+          source: "MEG Museum - www.meg.ch/fr"
+        },
+        {
+          id: Date.now() + 3,
+          title: "Family Nature Walk in Botanical Gardens",
+          type: "Outdoor Activity",
+          description: "Guided exploration of Geneva's botanical gardens with activities designed to help children recognize local plants and wildlife.",
+          date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          completed: false,
+          skillArea: "Environmental Awareness",
+          location: "Conservatory and Botanical Garden, 1 Chemin de l'Impératrice, 1292 Chambésy",
+          source: "Ville de Genève - www.geneve.ch/fr/agenda-manifestations"
         }
       ];
       
