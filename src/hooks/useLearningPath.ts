@@ -3,9 +3,9 @@ import { useState, useEffect } from 'react';
 import { useLearningPathBasic } from './learning-path/useLearningPathBasic';
 import { useAdvancedLearningPath } from './learning-path/useAdvancedLearningPath';
 import { useActivityStatus } from './learning-path/useActivityStatus';
-import { Activity } from './learning-path/types';
+import type { Activity } from './learning-path/types';
 
-export { Activity } from './learning-path/types';
+export type { Activity } from './learning-path/types';
 
 export const useLearningPath = (childId?: string) => {
   const basicPath = useLearningPathBasic(childId);
