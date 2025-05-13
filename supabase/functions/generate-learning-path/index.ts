@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
@@ -30,10 +29,14 @@ serve(async (req) => {
       );
     }
     
+    // Better error handling for missing API key
     if (!geminiApiKey) {
       console.error("Gemini API key is not configured in environment variables");
       return new Response(
-        JSON.stringify({ error: "Gemini API key is not configured" }),
+        JSON.stringify({ 
+          error: "Gemini API key is not configured", 
+          details: "Please add the GEMINI_API_KEY to your Supabase secrets" 
+        }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
