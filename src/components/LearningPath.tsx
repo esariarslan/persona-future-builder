@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, Calendar, Pencil, BookOpen, Award, Eye } from "lucide-react";
+import { Check, Calendar, Pencil, BookOpen, Award, Eye, Sparkles } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,8 @@ import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover
 import { Input } from "@/components/ui/input";
 import { useForm, Controller } from "react-hook-form";
 import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
+import AdvancedLearningPath from './AdvancedLearningPath';
+import { useLearningPath } from '@/hooks/useLearningPath';
 
 interface Activity {
   id: number;
@@ -22,6 +24,8 @@ interface Activity {
   completed: boolean;
   skillArea: string;
   memo?: string;
+  location?: string;
+  source?: string;
 }
 
 interface Observation {
@@ -32,14 +36,24 @@ interface Observation {
 
 interface LearningPathProps {
   activities: Activity[];
+  childId?: string;
 }
 
-const LearningPath: React.FC<LearningPathProps> = ({ activities: initialActivities }) => {
+const LearningPath: React.FC<LearningPathProps> = ({ activities: initialActivities, childId }) => {
   const [activities, setActivities] = useState<Activity[]>(initialActivities);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentActivity, setCurrentActivity] = useState<Activity | null>(null);
   const [memo, setMemo] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAdvancedPath, setShowAdvancedPath] = useState(false);
+  
+  // Get advanced learning path functionality
+  const { 
+    advancedActivities, 
+    advancedLoading, 
+    generateAdvancedLearningPath,
+    updateActivityStatus 
+  } = useLearningPath(childId);
   
   // Sample past observations (replace with actual data from backend)
   const [observations, setObservations] = useState<Observation[]>([
@@ -140,157 +154,183 @@ const LearningPath: React.FC<LearningPathProps> = ({ activities: initialActiviti
     }
   };
 
+  const handleGenerateAdvancedPath = () => {
+    generateAdvancedLearningPath();
+    setShowAdvancedPath(true);
+  };
+
   return (
-    <Card className="w-full shadow-md">
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-center">
-          <CardTitle className="text-2xl text-persona-blue">Learning Path</CardTitle>
-          <Badge variant="outline" className="bg-persona-light-purple text-persona-purple">
-            {progressPercentage}% Complete
-          </Badge>
-        </div>
-        <Progress value={progressPercentage} className="h-2 mt-2" />
-        
-        <div className="mt-4 flex flex-wrap gap-4">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="bg-white hover:bg-gray-50"
-            onClick={() => setIsObservationDialogOpen(true)}
-          >
-            <Pencil className="h-4 w-4 mr-2" />
-            Add Observation
-          </Button>
+    <>
+      <Card className="w-full shadow-md mb-8">
+        <CardHeader className="pb-3">
+          <div className="flex justify-between items-center">
+            <CardTitle className="text-2xl text-persona-blue">Learning Path</CardTitle>
+            <Badge variant="outline" className="bg-persona-light-purple text-persona-purple">
+              {progressPercentage}% Complete
+            </Badge>
+          </div>
+          <Progress value={progressPercentage} className="h-2 mt-2" />
           
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="bg-white hover:bg-gray-50"
-              >
-                <Eye className="h-4 w-4 mr-2" />
-                View Past Observations
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-80 p-0" align="start">
-              <div className="p-4 bg-persona-soft-bg border-b border-gray-100">
-                <h3 className="font-medium">Past Observations</h3>
-                <p className="text-sm text-gray-500">Click on an observation to view details</p>
-              </div>
-              <div className="max-h-64 overflow-y-auto">
-                {observations.length > 0 ? observations.map((obs) => (
-                  <button
-                    key={obs.id}
-                    className="w-full text-left p-3 hover:bg-gray-50 border-b border-gray-100 last:border-0 transition-colors"
-                    onClick={() => viewObservation(obs)}
-                  >
-                    <p className="text-sm font-medium line-clamp-2">{obs.content}</p>
-                    <p className="text-xs text-gray-500 mt-1">{obs.date}</p>
-                  </button>
-                )) : (
-                  <div className="p-4 text-center text-gray-500">
-                    No observations yet
-                  </div>
-                )}
-              </div>
-            </PopoverContent>
-          </Popover>
-          
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="bg-white hover:bg-gray-50"
-              >
-                <Pencil className="h-4 w-4 mr-2" />
-                Add Interests
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-80">
-              <Form {...interestsForm}>
-                <form onSubmit={interestsForm.handleSubmit(handleAddInterests)} className="space-y-4">
-                  <FormField
-                    control={interestsForm.control}
-                    name="interests"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm font-medium">Child Interests</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="e.g. music, dinosaurs, space"
-                            className="bg-white"
-                            {...field}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <div className="flex justify-end">
-                    <Button type="submit" size="sm" className="bg-persona-blue text-white hover:bg-persona-blue/90">
-                      Save Interests
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </PopoverContent>
-          </Popover>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="relative">
-          <div className="absolute top-0 left-5 h-full w-0.5 bg-gray-200" />
-          {activities.map((activity, index) => (
-            <div key={activity.id} className="mb-8 relative">
-              <div className="flex">
-                <div className={`h-10 w-10 rounded-full flex items-center justify-center z-10 ${activity.completed ? "bg-persona-green" : "bg-white border-2 border-gray-300"}`}>
-                  {activity.completed && <Check className="h-4 w-4 text-white" />}
+          <div className="mt-4 flex flex-wrap gap-4">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="bg-white hover:bg-gray-50"
+              onClick={() => setIsObservationDialogOpen(true)}
+            >
+              <Pencil className="h-4 w-4 mr-2" />
+              Add Observation
+            </Button>
+            
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="bg-white hover:bg-gray-50"
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  View Past Observations
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-0" align="start">
+                <div className="p-4 bg-persona-soft-bg border-b border-gray-100">
+                  <h3 className="font-medium">Past Observations</h3>
+                  <p className="text-sm text-gray-500">Click on an observation to view details</p>
                 </div>
-                <div className="ml-4 flex-1">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium">{activity.title}</h3>
-                    <Badge variant="outline" className="bg-persona-soft-gray text-gray-700">
-                      {activity.skillArea}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center text-sm text-gray-500 mt-1">
-                    {getActivityIcon(activity.type)}
-                    <span>{activity.type}</span>
-                    <span className="mx-2">•</span>
-                    <Calendar className="h-3 w-3 mr-1" />
-                    <span>{activity.date}</span>
-                  </div>
-                  <p className="text-gray-600 mt-2">{activity.description}</p>
-                  
-                  {activity.completed ? (
-                    <div className="mt-3">
-                      <Badge className="bg-persona-green">Completed</Badge>
-                      {activity.memo && (
-                        <div className="mt-2 p-3 bg-gray-50 rounded-md text-sm">
-                          <div className="flex items-center text-gray-500 mb-1">
-                            <Pencil className="h-3 w-3 mr-1" />
-                            <span>Memo</span>
-                          </div>
-                          <p className="text-gray-700">{activity.memo}</p>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <Button 
-                      variant="outline" 
-                      className="mt-3 hover:bg-persona-blue/10"
-                      onClick={() => handleOpenDialog(activity)}
+                <div className="max-h-64 overflow-y-auto">
+                  {observations.length > 0 ? observations.map((obs) => (
+                    <button
+                      key={obs.id}
+                      className="w-full text-left p-3 hover:bg-gray-50 border-b border-gray-100 last:border-0 transition-colors"
+                      onClick={() => viewObservation(obs)}
                     >
-                      Mark as completed
-                    </Button>
+                      <p className="text-sm font-medium line-clamp-2">{obs.content}</p>
+                      <p className="text-xs text-gray-500 mt-1">{obs.date}</p>
+                    </button>
+                  )) : (
+                    <div className="p-4 text-center text-gray-500">
+                      No observations yet
+                    </div>
                   )}
                 </div>
+              </PopoverContent>
+            </Popover>
+            
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="bg-white hover:bg-gray-50"
+                >
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Add Interests
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80">
+                <Form {...interestsForm}>
+                  <form onSubmit={interestsForm.handleSubmit(handleAddInterests)} className="space-y-4">
+                    <FormField
+                      control={interestsForm.control}
+                      name="interests"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium">Child Interests</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="e.g. music, dinosaurs, space"
+                              className="bg-white"
+                              {...field}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <div className="flex justify-end">
+                      <Button type="submit" size="sm" className="bg-persona-blue text-white hover:bg-persona-blue/90">
+                        Save Interests
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </PopoverContent>
+            </Popover>
+
+            {/* New Advanced Learning Path Button */}
+            <Button 
+              className="bg-persona-purple hover:bg-persona-purple/90 text-white ms-auto"
+              onClick={handleGenerateAdvancedPath}
+              disabled={advancedLoading}
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              {advancedLoading ? 'Generating...' : 'Advanced Learning Path'}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="relative">
+            <div className="absolute top-0 left-5 h-full w-0.5 bg-gray-200" />
+            {activities.map((activity, index) => (
+              <div key={activity.id} className="mb-8 relative">
+                <div className="flex">
+                  <div className={`h-10 w-10 rounded-full flex items-center justify-center z-10 ${activity.completed ? "bg-persona-green" : "bg-white border-2 border-gray-300"}`}>
+                    {activity.completed && <Check className="h-4 w-4 text-white" />}
+                  </div>
+                  <div className="ml-4 flex-1">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-medium">{activity.title}</h3>
+                      <Badge variant="outline" className="bg-persona-soft-gray text-gray-700">
+                        {activity.skillArea}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center text-sm text-gray-500 mt-1">
+                      {getActivityIcon(activity.type)}
+                      <span>{activity.type}</span>
+                      <span className="mx-2">•</span>
+                      <Calendar className="h-3 w-3 mr-1" />
+                      <span>{activity.date}</span>
+                    </div>
+                    <p className="text-gray-600 mt-2">{activity.description}</p>
+                    
+                    {activity.completed ? (
+                      <div className="mt-3">
+                        <Badge className="bg-persona-green">Completed</Badge>
+                        {activity.memo && (
+                          <div className="mt-2 p-3 bg-gray-50 rounded-md text-sm">
+                            <div className="flex items-center text-gray-500 mb-1">
+                              <Pencil className="h-3 w-3 mr-1" />
+                              <span>Memo</span>
+                            </div>
+                            <p className="text-gray-700">{activity.memo}</p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <Button 
+                        variant="outline" 
+                        className="mt-3 hover:bg-persona-blue/10"
+                        onClick={() => handleOpenDialog(activity)}
+                      >
+                        Mark as completed
+                      </Button>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Display Advanced Learning Path if available */}
+      {showAdvancedPath && advancedActivities.length > 0 && (
+        <AdvancedLearningPath 
+          activities={advancedActivities} 
+          childId={childId || ''}
+          onActivityComplete={updateActivityStatus}
+        />
+      )}
 
       {/* Activity Completion Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -417,7 +457,7 @@ const LearningPath: React.FC<LearningPathProps> = ({ activities: initialActiviti
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </Card>
+    </>
   );
 };
 

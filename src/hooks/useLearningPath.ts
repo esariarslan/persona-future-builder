@@ -19,7 +19,9 @@ interface Activity {
 
 export const useLearningPath = (childId?: string) => {
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [advancedActivities, setAdvancedActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [advancedLoading, setAdvancedLoading] = useState<boolean>(false);
   const { children } = useChildren();
   const { toast } = useToast();
 
@@ -104,9 +106,120 @@ export const useLearningPath = (childId?: string) => {
     }
   };
 
+  // Generate advanced learning path using Gemini
+  const generateAdvancedLearningPath = async () => {
+    if (!childId && (!children || children.length === 0)) {
+      toast({
+        title: "No child profile found",
+        description: "Please create a child profile first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setAdvancedLoading(true);
+
+    try {
+      // Get the child data
+      const targetChildId = childId || children[0].id;
+      
+      // Get existing observations for this child
+      const { data: childObservations, error: obsError } = await supabase
+        .from('observations')
+        .select('content, created_at')
+        .eq('child_id', targetChildId)
+        .order('created_at', { ascending: false });
+        
+      if (obsError) throw obsError;
+      
+      const childProfile = children.find(child => child.id === targetChildId);
+      
+      // Call the Supabase Edge Function to generate learning path with Gemini
+      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/generate-learning-path`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabase.supabaseKey}`
+        },
+        body: JSON.stringify({
+          childId: targetChildId,
+          observations: childObservations || [],
+          interests: childProfile?.interests || [],
+          documentContent: null  // We can add document content processing later
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate advanced learning path');
+      }
+      
+      const data = await response.json();
+      
+      if (!data.activities || !Array.isArray(data.activities)) {
+        throw new Error('Invalid response from AI service');
+      }
+      
+      // Transform the Gemini activities to match our Activity interface
+      const newActivities: Activity[] = data.activities.map((activity: any, index: number) => ({
+        id: Date.now() + index,
+        title: activity.title,
+        type: activity.type,
+        description: activity.description,
+        date: activity.date,
+        completed: false,
+        skillArea: activity.skillArea,
+        location: activity.location,
+        source: activity.source || "Parentville Geneva"
+      }));
+      
+      setAdvancedActivities(newActivities);
+      
+      toast({
+        title: "Advanced learning path generated",
+        description: "New Geneva-specific activities have been created for your child"
+      });
+      
+    } catch (error: any) {
+      console.error('Error generating advanced learning path:', error);
+      toast({
+        title: "Error generating advanced learning path",
+        description: error.message || "An unexpected error occurred",
+        variant: "destructive"
+      });
+    } finally {
+      setAdvancedLoading(false);
+    }
+  };
+
+  // Update activity completion status
+  const updateActivityStatus = (activityId: number, completed: boolean, memo?: string) => {
+    // Update regular activities
+    setActivities(prevActivities => 
+      prevActivities.map(activity => 
+        activity.id === activityId 
+          ? { ...activity, completed, memo: memo || activity.memo }
+          : activity
+      )
+    );
+    
+    // Update advanced activities
+    setAdvancedActivities(prevActivities => 
+      prevActivities.map(activity => 
+        activity.id === activityId 
+          ? { ...activity, completed, memo: memo || activity.memo }
+          : activity
+      )
+    );
+  };
+
   return {
     activities,
+    advancedActivities,
     loading,
-    generateLearningPath
+    advancedLoading,
+    generateLearningPath,
+    generateAdvancedLearningPath,
+    updateActivityStatus
   };
 };

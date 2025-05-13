@@ -70,6 +70,16 @@ const DashboardPage = () => {
   const [interestInput, setInterestInput] = useState('');
   const [currentInterests, setCurrentInterests] = useState<string[]>([]);
 
+  // Get the Learning Path functionality
+  const { 
+    activities: learningPathActivities, 
+    advancedActivities,
+    loading: learningPathLoading, 
+    advancedLoading,
+    generateLearningPath,
+    updateActivityStatus 
+  } = useLearningPath(selectedChild?.id);
+
   useEffect(() => {
     // Set the first child as selected when data loads
     if (children && children.length > 0 && !selectedChild) {
@@ -354,7 +364,10 @@ const DashboardPage = () => {
                 </div>
                 
                 <div className="grid grid-cols-1 gap-8 mb-8">
-                  <LearningPath activities={sampleLearningActivities} />
+                  <LearningPath 
+                    activities={learningPathActivities} 
+                    childId={selectedChild.id}
+                  />
                 </div>
                 
                 <div className="mb-8">
