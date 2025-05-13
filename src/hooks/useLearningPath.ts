@@ -10,7 +10,7 @@ export type { Activity } from './learning-path/types';
 export const useLearningPath = (childId?: string) => {
   const safeChildId = childId || 'default';
   
-  // Use child-specific hooks
+  // Use child-specific hooks with explicit child ID
   const basicPath = useLearningPathBasic(childId);
   const advancedPath = useAdvancedLearningPath(childId);
   const activityStatus = useActivityStatus(
@@ -19,9 +19,10 @@ export const useLearningPath = (childId?: string) => {
     advancedPath.advancedActivities
   );
   
-  // Sync activities from basic path to activity status
+  // Sync activities from basic path to activity status only for this specific child
   useEffect(() => {
     if (basicPath.activities.length > 0) {
+      console.log(`Syncing ${basicPath.activities.length} basic activities for child ${childId}`);
       // Merge existing completion status with new activities
       const mergedActivities = basicPath.activities.map(newActivity => {
         const existingActivity = activityStatus.activities.find(a => a.id === newActivity.id);
@@ -33,7 +34,7 @@ export const useLearningPath = (childId?: string) => {
     }
   }, [basicPath.activities, childId]);
   
-  // Sync activities from advanced path to activity status
+  // Sync activities from advanced path to activity status only for this specific child
   useEffect(() => {
     if (advancedPath.advancedActivities.length > 0) {
       console.log(`Syncing ${advancedPath.advancedActivities.length} advanced activities for child ${childId}`);

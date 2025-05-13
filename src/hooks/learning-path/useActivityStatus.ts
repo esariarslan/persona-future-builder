@@ -10,13 +10,16 @@ export const useActivityStatus = (
 ) => {
   const [activities, setActivities] = useState<Activity[]>(initialActivities);
   const [advancedActivities, setAdvancedActivities] = useState<Activity[]>(initialAdvancedActivities);
-  const [localStorageKey] = useState<string>(`learning-path-${childId}`);
-  const [advLocalStorageKey] = useState<string>(`adv-learning-path-${childId}`);
+  // Create distinct storage keys for each child
+  const localStorageKey = `learning-path-${childId}`;
+  const advLocalStorageKey = `adv-learning-path-${childId}`;
 
   // Load saved activity status from local storage on initial mount or when childId changes
   useEffect(() => {
     if (childId) {
       console.log(`Loading activities for child: ${childId}`);
+      console.log(`Using storage keys: ${localStorageKey} and ${advLocalStorageKey}`);
+      
       const savedActivities = localStorage.getItem(localStorageKey);
       const savedAdvActivities = localStorage.getItem(advLocalStorageKey);
       
@@ -30,7 +33,7 @@ export const useActivityStatus = (
             setActivities(initialActivities);
           }
         } catch (e) {
-          console.error("Error parsing saved activities:", e);
+          console.error(`Error parsing saved activities for child ${childId}:`, e);
           setActivities(initialActivities);
         }
       } else if (initialActivities.length > 0) {
@@ -47,7 +50,7 @@ export const useActivityStatus = (
             setAdvancedActivities(initialAdvancedActivities);
           }
         } catch (e) {
-          console.error("Error parsing saved advanced activities:", e);
+          console.error(`Error parsing saved advanced activities for child ${childId}:`, e);
           setAdvancedActivities(initialAdvancedActivities);
         }
       } else if (initialAdvancedActivities.length > 0) {
@@ -59,6 +62,7 @@ export const useActivityStatus = (
   // Save activities to local storage whenever they change
   useEffect(() => {
     if (childId && activities.length > 0) {
+      console.log(`Saving ${activities.length} activities for child ${childId} to ${localStorageKey}`);
       localStorage.setItem(localStorageKey, JSON.stringify(activities));
     }
   }, [activities, childId, localStorageKey]);
@@ -66,8 +70,8 @@ export const useActivityStatus = (
   // Save advanced activities to local storage whenever they change
   useEffect(() => {
     if (childId && advancedActivities.length > 0) {
+      console.log(`Saving ${advancedActivities.length} advanced activities for child ${childId} to ${advLocalStorageKey}`);
       localStorage.setItem(advLocalStorageKey, JSON.stringify(advancedActivities));
-      console.log(`Saved ${advancedActivities.length} advanced activities for child ${childId}`);
     }
   }, [advancedActivities, childId, advLocalStorageKey]);
 

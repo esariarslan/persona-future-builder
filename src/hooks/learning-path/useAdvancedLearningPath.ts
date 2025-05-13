@@ -11,27 +11,33 @@ export const useAdvancedLearningPath = (childId?: string) => {
   const { children } = useChildren();
   const { toast } = useToast();
 
-  // Load saved activities from localStorage on initial mount
+  // Load saved activities from localStorage on initial mount - specific to this child
   useEffect(() => {
     if (childId) {
-      const savedActivities = localStorage.getItem(`adv-learning-path-${childId}`);
+      const storageKey = `adv-learning-path-${childId}`;
+      console.log(`Loading advanced activities from ${storageKey}`);
+      
+      const savedActivities = localStorage.getItem(storageKey);
       if (savedActivities) {
         try {
           const parsedActivities = JSON.parse(savedActivities);
           if (Array.isArray(parsedActivities) && parsedActivities.length > 0) {
+            console.log(`Found ${parsedActivities.length} saved advanced activities for child ${childId}`);
             setAdvancedActivities(parsedActivities);
           }
         } catch (e) {
-          console.error("Error parsing saved advanced activities:", e);
+          console.error(`Error parsing saved advanced activities for child ${childId}:`, e);
         }
       }
     }
   }, [childId]);
 
-  // Save activities to localStorage whenever they change
+  // Save activities to localStorage whenever they change - specific to this child
   useEffect(() => {
     if (childId && advancedActivities.length > 0) {
-      localStorage.setItem(`adv-learning-path-${childId}`, JSON.stringify(advancedActivities));
+      const storageKey = `adv-learning-path-${childId}`;
+      console.log(`Saving ${advancedActivities.length} advanced activities to ${storageKey}`);
+      localStorage.setItem(storageKey, JSON.stringify(advancedActivities));
     }
   }, [advancedActivities, childId]);
 
@@ -49,8 +55,9 @@ export const useAdvancedLearningPath = (childId?: string) => {
     setLoading(true);
 
     try {
-      // Get the child data
+      // Get the child data - ensure we're using the correct child ID
       const targetChildId = childId || children[0].id;
+      console.log(`Generating advanced learning path for child ${targetChildId}`);
       
       // Get existing observations for this child
       const childObservations = await getChildObservations(targetChildId);
@@ -71,14 +78,16 @@ export const useAdvancedLearningPath = (childId?: string) => {
       // Set the advanced activities
       setAdvancedActivities(activities);
       
-      // Save to localStorage
+      // Save to localStorage with child-specific key
       if (targetChildId) {
-        localStorage.setItem(`adv-learning-path-${targetChildId}`, JSON.stringify(activities));
+        const storageKey = `adv-learning-path-${targetChildId}`;
+        console.log(`Saving generated advanced learning path to ${storageKey}`);
+        localStorage.setItem(storageKey, JSON.stringify(activities));
       }
       
       toast({
         title: "Geneva-specific learning path generated",
-        description: "New activities based on current Geneva events have been created for your child"
+        description: `New activities based on current Geneva events have been created for ${childProfile.first_name}`
       });
       
     } catch (error: any) {
