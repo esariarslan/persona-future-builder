@@ -2,8 +2,7 @@
 import React from 'react';
 import Navbar from '@/components/Navbar';
 import ObservationForm from '@/components/ObservationForm';
-import RecommendationCard from '@/components/RecommendationCard';
-import { futureSkills, recommendedActivities } from '@/data/futureSkills';
+import { futureSkills } from '@/data/futureSkills';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Globe } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -131,37 +130,6 @@ const Index = () => {
                 </ul>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-      
-      {/* Sample Recommendations */}
-      <section className="py-16 px-4 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold font-heading text-center mb-4">Recommended Activities</h2>
-          <p className="text-center text-gray-600 mb-12">Examples of personalized recommendations based on children's needs</p>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {recommendedActivities.slice(0, 3).map((activity) => (
-              <RecommendationCard
-                key={activity.id}
-                title={activity.title}
-                description={activity.description}
-                type={activity.type}
-                location={activity.location}
-                date={activity.date}
-                skills={activity.skills}
-                image={activity.image}
-              />
-            ))}
-          </div>
-          
-          <div className="text-center mt-10">
-            <Link to="/resources">
-              <Button variant="outline" className="border-persona-blue text-persona-blue hover:bg-persona-blue/10">
-                View More Recommendations <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
           </div>
         </div>
       </section>
