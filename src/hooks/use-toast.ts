@@ -1,11 +1,12 @@
 
-// We're creating a proper toast hook file to replace the re-exported one
-import { useToast as useShadcnToast } from "@/components/ui/use-toast"
+// We'll import directly from the shadcn component instead of re-importing from our own file
+import { useToast as useShadcnToast } from "@radix-ui/react-toast";
 
+// Export the shadcn useToast hook directly
 export const useToast = useShadcnToast;
 
+// Define our toast utility functions
 export const toast = {
-  // Re-export the methods we need from sonner or another toast library
   success: (title: string, options?: { description?: string }) => {
     const { toast } = useShadcnToast();
     toast({
