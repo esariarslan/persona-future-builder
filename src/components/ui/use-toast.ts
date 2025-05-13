@@ -1,5 +1,5 @@
 
-// Re-export from the proper location to maintain backward compatibility for any imports
+// Re-export from our hooks implementation
 import { useToast, toast } from "@/hooks/use-toast";
 
 export { useToast, toast };
