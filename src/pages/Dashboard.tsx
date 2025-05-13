@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
+import { useLearningPath } from '@/hooks/useLearningPath';
 
 // Sample activities for the learning path
 const sampleLearningActivities = [
