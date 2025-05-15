@@ -71,14 +71,15 @@ const DashboardPage = () => {
   const [interestInput, setInterestInput] = useState('');
   const [currentInterests, setCurrentInterests] = useState<string[]>([]);
 
-  // Get the Learning Path functionality
+  // Get the Learning Path functionality with the selected child's ID
   const { 
     activities: learningPathActivities, 
     advancedActivities,
     loading: learningPathLoading, 
     advancedLoading,
     generateLearningPath,
-    updateActivityStatus 
+    updateActivityStatus,
+    showAdvancedPath
   } = useLearningPath(selectedChild?.id);
 
   useEffect(() => {

@@ -9,6 +9,7 @@ export type { Activity } from './learning-path/types';
 
 export const useLearningPath = (childId?: string) => {
   const safeChildId = childId || 'default';
+  const [showAdvancedPath, setShowAdvancedPath] = useState<boolean>(false);
   
   // Use child-specific hooks with explicit child ID
   const basicPath = useLearningPathBasic(childId);
@@ -18,6 +19,21 @@ export const useLearningPath = (childId?: string) => {
     basicPath.activities, 
     advancedPath.advancedActivities
   );
+  
+  // Load the visibility state of advanced path from localStorage
+  useEffect(() => {
+    if (childId) {
+      const showAdvancedKey = `show-advanced-path-${childId}`;
+      const savedShowAdvanced = localStorage.getItem(showAdvancedKey);
+      if (savedShowAdvanced) {
+        try {
+          setShowAdvancedPath(JSON.parse(savedShowAdvanced));
+        } catch (e) {
+          console.error(`Error parsing show advanced path preference for child ${childId}:`, e);
+        }
+      }
+    }
+  }, [childId]);
   
   // Sync activities from basic path to activity status only for this specific child
   useEffect(() => {
@@ -49,6 +65,21 @@ export const useLearningPath = (childId?: string) => {
     }
   }, [advancedPath.advancedActivities, childId]);
   
+  // Save the visibility state when it changes
+  const toggleAdvancedPath = (show: boolean) => {
+    setShowAdvancedPath(show);
+    if (childId) {
+      const showAdvancedKey = `show-advanced-path-${childId}`;
+      localStorage.setItem(showAdvancedKey, JSON.stringify(show));
+    }
+  };
+  
+  // Generate and automatically show advanced path
+  const generateAndShowAdvancedPath = async () => {
+    await advancedPath.generateAdvancedLearningPath();
+    toggleAdvancedPath(true);
+  };
+  
   return {
     // Basic path properties
     activities: activityStatus.activities,
@@ -58,7 +89,11 @@ export const useLearningPath = (childId?: string) => {
     // Advanced path properties (renamed for Geneva focus)
     advancedActivities: activityStatus.advancedActivities,
     advancedLoading: advancedPath.loading,
-    generateAdvancedLearningPath: advancedPath.generateAdvancedLearningPath,
+    generateAdvancedLearningPath: generateAndShowAdvancedPath,
+    
+    // Visibility control for advanced path
+    showAdvancedPath,
+    toggleAdvancedPath,
     
     // Activity status management
     updateActivityStatus: activityStatus.updateActivityStatus

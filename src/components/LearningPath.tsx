@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useForm } from "react-hook-form";
@@ -26,14 +27,15 @@ const LearningPath: React.FC<LearningPathProps> = ({ activities: initialActiviti
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentActivity, setCurrentActivity] = useState<Activity | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showAdvancedPath, setShowAdvancedPath] = useState(false);
   
   // Get advanced learning path functionality
   const { 
     advancedActivities, 
     advancedLoading, 
     generateAdvancedLearningPath,
-    updateActivityStatus 
+    updateActivityStatus,
+    showAdvancedPath,
+    toggleAdvancedPath
   } = useLearningPath(childId);
   
   // Sample past observations (replace with actual data from backend)
@@ -125,7 +127,6 @@ const LearningPath: React.FC<LearningPathProps> = ({ activities: initialActiviti
 
   const handleGenerateAdvancedPath = () => {
     generateAdvancedLearningPath();
-    setShowAdvancedPath(true);
   };
 
   return (
@@ -152,11 +153,12 @@ const LearningPath: React.FC<LearningPathProps> = ({ activities: initialActiviti
       </Card>
 
       {/* Display Advanced Learning Path if available */}
-      {showAdvancedPath && (
+      {showAdvancedPath && advancedActivities.length > 0 && (
         <AdvancedLearningPath 
           activities={advancedActivities} 
           childId={childId || ''}
           onActivityComplete={updateActivityStatus}
+          onClose={() => toggleAdvancedPath(false)}
         />
       )}
 

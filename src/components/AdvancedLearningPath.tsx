@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, Calendar, Pencil, BookOpen, Award, Sparkles, Clock } from "lucide-react";
+import { Check, Calendar, Pencil, BookOpen, Award, Sparkles, Clock, X } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -26,9 +26,15 @@ interface AdvancedLearningPathProps {
   activities: Activity[];
   childId: string;
   onActivityComplete: (activityId: number, completed: boolean, memo?: string) => void;
+  onClose?: () => void;
 }
 
-const AdvancedLearningPath: React.FC<AdvancedLearningPathProps> = ({ activities, childId, onActivityComplete }) => {
+const AdvancedLearningPath: React.FC<AdvancedLearningPathProps> = ({ 
+  activities, 
+  childId, 
+  onActivityComplete,
+  onClose 
+}) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentActivity, setCurrentActivity] = useState<Activity | null>(null);
   const [memo, setMemo] = useState("");
@@ -95,9 +101,22 @@ const AdvancedLearningPath: React.FC<AdvancedLearningPathProps> = ({ activities,
                 Up-to-date
               </Badge>
             </CardTitle>
-            <Badge variant="outline" className="bg-persona-light-purple text-persona-purple">
-              {progressPercentage}% Complete
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="bg-persona-light-purple text-persona-purple">
+                {progressPercentage}% Complete
+              </Badge>
+              {onClose && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={onClose} 
+                  className="h-8 w-8 p-0"
+                >
+                  <X className="h-4 w-4" />
+                  <span className="sr-only">Close</span>
+                </Button>
+              )}
+            </div>
           </div>
           <Progress value={progressPercentage} className="h-2 mt-2" />
         </CardHeader>
